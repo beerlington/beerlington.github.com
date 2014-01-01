@@ -1,113 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
 
-<!DOCTYPE html>
-<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
-<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
-<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  <title>Beerlington</title>
-  <meta name="author" content="Peter Brown">
-
-  
-  <meta name="description" content="I&rsquo;ve seen a few great posts today from people reflecting on some of their
-accomplishments and favorite things from 2013, so I was inspired to &hellip;">
-  
-
-  <!-- http://t.co/dKP3o1e -->
-  <meta name="HandheldFriendly" content="True">
-  <meta name="MobileOptimized" content="320">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  
-  <link rel="canonical" href="http://beerlington.github.io/">
-  <link href="/favicon.png" rel="icon">
-  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
-  <script src="/javascripts/modernizr-2.0.js"></script>
-  <script src="/javascripts/ender.js"></script>
-  <script src="/javascripts/octopress.js" type="text/javascript"></script>
-  <link href="/atom.xml" rel="alternate" title="Beerlington" type="application/atom+xml">
-  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
-<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
-<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
-
-  
-  <script type="text/javascript">
-    var _gaq = _gaq || [];
-    _gaq.push(['_setAccount', 'UA-24856035-1']);
-    _gaq.push(['_trackPageview']);
-
-    (function() {
-      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-    })();
-  </script>
-
-
-</head>
-
-<body   >
-  <header role="banner"><hgroup>
-  <h1><a href="/">Beerlington</a></h1>
-  
-    <h2>A blog by Peter Brown</h2>
-  
-</hgroup>
-
-</header>
-  <nav role="navigation"><ul class="subscription" data-subscription="rss">
-  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
-  
-</ul>
-  
-<form action="http://google.com/search" method="get">
-  <fieldset role="search">
-    <input type="hidden" name="q" value="site:beerlington.github.io" />
-    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
-  </fieldset>
-</form>
-  
-<ul class="main-navigation">
-  <li><a href="/">Blog</a></li>
-  <li><a href="/blog/archives">Archives</a></li>
-  <li><a href="/about">About Me</a></li>
-</ul>
-
-</nav>
-  <div id="main">
-    <div id="content">
-      <div class="blog-index">
-  
-  
-  
-    <article>
-      
-  <header>
+  <title><![CDATA[Beerlington]]></title>
+  <link href="http://beerlington.github.io/atom.xml" rel="self"/>
+  <link href="http://beerlington.github.io/"/>
+  <updated>2013-12-31T21:18:39-05:00</updated>
+  <id>http://beerlington.github.io/</id>
+  <author>
+    <name><![CDATA[Peter Brown]]></name>
     
-      <h1 class="entry-title"><a href="/blog/2013/12/31/my-year-in-review/">My Year in Review</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
 
   
-
-
-<time datetime="2013-12-31T19:22:00-05:00" pubdate data-updated="true">Dec 31<span>st</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+  <entry>
+    <title type="html"><![CDATA[My Year in Review]]></title>
+    <link href="http://beerlington.github.io/blog/2013/12/31/my-year-in-review/"/>
+    <updated>2013-12-31T19:22:00-05:00</updated>
+    <id>http://beerlington.github.io/blog/2013/12/31/my-year-in-review</id>
+    <content type="html"><![CDATA[<script async src="http://beerlington.github.io//platform.twitter.com/widgets.js" charset="utf-8"></script>
 
 
 <p>I&rsquo;ve seen a few great posts today from people reflecting on some of their
@@ -278,83 +189,29 @@ favorite tweets that still make me chuckle.</p>
 
 
 <p>Happy New Year and thanks for reading!</p>
-</div>
+]]></content>
+  </entry>
   
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/08/18/the-bill-and-ted-experience-in-software-development/">Have You Ever Had a Bill and Ted Coding Experience?</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-08-18T14:41:00-04:00" pubdate data-updated="true">Aug 18<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Have you ever had an experience where you started to write some code only to discover that the code already existed? &ldquo;Woah&rdquo; you think to yourself as you fire off &ldquo;git blame&rdquo; to figure out which one of your coworkers deserves a full-force high five. Low and behold, your own name shows up as the author, and your mind is blown because you have no memory of writing it.</p>
+  <entry>
+    <title type="html"><![CDATA[Have You Ever Had a Bill and Ted Coding Experience?]]></title>
+    <link href="http://beerlington.github.io/blog/2013/08/18/the-bill-and-ted-experience-in-software-development/"/>
+    <updated>2013-08-18T14:41:00-04:00</updated>
+    <id>http://beerlington.github.io/blog/2013/08/18/the-bill-and-ted-experience-in-software-development</id>
+    <content type="html"><![CDATA[<p>Have you ever had an experience where you started to write some code only to discover that the code already existed? &ldquo;Woah&rdquo; you think to yourself as you fire off &ldquo;git blame&rdquo; to figure out which one of your coworkers deserves a full-force high five. Low and behold, your own name shows up as the author, and your mind is blown because you have no memory of writing it.</p>
 
 <p>You, my friend, just had a Bill and Ted Experience.</p>
 
-<iframe width="560" height="315" src="//www.youtube.com/embed/_NjDHiLzpZc" frameborder="0" allowfullscreen></iframe>
+<iframe width="560" height="315" src="http://beerlington.github.io//www.youtube.com/embed/_NjDHiLzpZc" frameborder="0" allowfullscreen></iframe>
 
-</div>
+]]></content>
+  </entry>
   
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/08/15/a-reflection-on-organizing-the-burlington-ruby-conference/">A Reflection on Organizing the Burlington Ruby Conference</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-08-15T21:19:00-04:00" pubdate data-updated="true">Aug 15<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p><img src="/images/burlington-ruby-conference-banner-small.png" alt="Burlington Ruby Conference Banner" /></p>
+  <entry>
+    <title type="html"><![CDATA[A Reflection on Organizing the Burlington Ruby Conference]]></title>
+    <link href="http://beerlington.github.io/blog/2013/08/15/a-reflection-on-organizing-the-burlington-ruby-conference/"/>
+    <updated>2013-08-15T21:19:00-04:00</updated>
+    <id>http://beerlington.github.io/blog/2013/08/15/a-reflection-on-organizing-the-burlington-ruby-conference</id>
+    <content type="html"><![CDATA[<p><img src="http://beerlington.github.io/images/burlington-ruby-conference-banner-small.png" alt="Burlington Ruby Conference Banner" /></p>
 
 <p>&ldquo;Why are you organizing a conference?&rdquo; &ndash; Someone asked me this question when we were just starting to plan for this year&rsquo;s Burlington Ruby Conference. I don&rsquo;t remember my exact response, but it was probably a long the lines of &ldquo;Uhhhh I don&rsquo;t know, it&rsquo;s just something I want to do&rdquo;. I remember thinking &ldquo;why wouldn&rsquo;t you want to do it?&rdquo;. I was really excited about it and it felt like one of those things I was supposed to do.</p>
 
@@ -404,7 +261,7 @@ favorite tweets that still make me chuckle.</p>
 
 <h2>MOAR Sponsors</h2>
 
-<p>&ldquo;Let&rsquo;s just get more sponsors&rdquo;. This was probably the most naive thought I had going into planning this year&rsquo;s conference. The thing about sponsors is that unless you have a direct connection or are an established event, it&rsquo;s pretty much impossible to find them. There are three reasons I can think of why someone would sponsor a conference. 1) They&rsquo;re hiring, 2) they&rsquo;re marketing a product, and/or 3) to support their community. As I mentioned in my <a href="/blog/2013/04/06/building-a-strong-foundation-for-vermonts-technology-future/">previous blog post</a>, we didn&rsquo;t have much traction from our local community in terms of financial support, but I thought it would be different if we reached out beyond our local community. Sadly this was not the case. If a company is selling a product or hiring, they want to know that their target audience will be in attendance. They need to know the conference is worth it for them. If they were basing their response on last year&rsquo;s conference, 75 attendees is not a lot of people to get in front of. After &ldquo;cold emailing&rdquo; a TON of companies and getting zero &lsquo;Yes&rsquo;s, it became apparent that we were wasting our time and would need to focus our attention on ticket sales. More on sponsorship in a bit&hellip;</p>
+<p>&ldquo;Let&rsquo;s just get more sponsors&rdquo;. This was probably the most naive thought I had going into planning this year&rsquo;s conference. The thing about sponsors is that unless you have a direct connection or are an established event, it&rsquo;s pretty much impossible to find them. There are three reasons I can think of why someone would sponsor a conference. 1) They&rsquo;re hiring, 2) they&rsquo;re marketing a product, and/or 3) to support their community. As I mentioned in my <a href="http://beerlington.github.io/blog/2013/04/06/building-a-strong-foundation-for-vermonts-technology-future/">previous blog post</a>, we didn&rsquo;t have much traction from our local community in terms of financial support, but I thought it would be different if we reached out beyond our local community. Sadly this was not the case. If a company is selling a product or hiring, they want to know that their target audience will be in attendance. They need to know the conference is worth it for them. If they were basing their response on last year&rsquo;s conference, 75 attendees is not a lot of people to get in front of. After &ldquo;cold emailing&rdquo; a TON of companies and getting zero &lsquo;Yes&rsquo;s, it became apparent that we were wasting our time and would need to focus our attention on ticket sales. More on sponsorship in a bit&hellip;</p>
 
 <h2>MOAR Attendees</h2>
 
@@ -419,7 +276,7 @@ favorite tweets that still make me chuckle.</p>
 <blockquote class="twitter-tweet"><p>There is a reason to visit Burlington, VT, besides Heady Topper. <a href="http://t.co/urpdJVWqX7">http://t.co/urpdJVWqX7</a></p>&mdash; Hiro Asari (@hiro_asari) <a href="https://twitter.com/hiro_asari/statuses/311518675708555264">March 12, 2013</a></blockquote>
 
 
-<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+<script async src="http://beerlington.github.io//platform.twitter.com/widgets.js" charset="utf-8"></script>
 
 
 <h2>The history of the cat sponsors and Ruby toys</h2>
@@ -430,7 +287,7 @@ favorite tweets that still make me chuckle.</p>
 
 <p>One month after the cats went live, and still no traction with sponsors, I was sitting there thinking about how great cats are, and decided we needed cat toys to go with the cat sponsors. I reached out to a local artist who had an <a href="http://www.etsy.com/shop/cattitudecattoy">Etsy store</a> and asked if she would be interested in making Ruby shaped catnip toys that we could sell at the conference. I felt like an idiot and thought she would think I was crazy, but she got back to me literally 5 minutes later and said she was interested in making them. She went ahead and made a trial run, and after a week we had the first official Ruby conference catnip toys.</p>
 
-<p><img src="/images/ruby-catnip-cat-toys.jpg" alt="Burlington Ruby Conference catnip cat toys" /></p>
+<p><img src="http://beerlington.github.io/images/ruby-catnip-cat-toys.jpg" alt="Burlington Ruby Conference catnip cat toys" /></p>
 
 <p>We mailed out some of the toys to people who had helped us out so far, and figured it would be a good way to get the word out. Soon <a href="http://instagram.com/p/aj3FIsgASy/">pictures</a> and <a href="https://vine.co/v/bEe3MDpDvhQ">videos</a> started popping up on Twitter, and we were getting a lot more traffic to our website. We don&rsquo;t really have any way of knowing, but I&rsquo;m curious how many people came to the conference either directly or indirectly because of the cats.</p>
 
@@ -442,7 +299,7 @@ favorite tweets that still make me chuckle.</p>
 
 <p>We felt strongly that the Ruby workshop was important to have in conjunction with the conference. Burlington has a very small developer community, and last year we had very few Vermonters in attendance. As I mentioned ealier, we met with Maureen to plan out a Ruby training/workshop, and she took the idea and ran with it. The workshop happened one week before the conference and had around 25 participants. Other than maybe a free class, this was probably one of the best introductions to programming and Ruby that someone could get for under $100. Maureen put together the entire class, including connecting with the teacher <a href="https://twitter.com/alexch">Alex Chaffee</a> who did an AWESOME job teaching the workshop. If you ever have a chance to buy either of these folks a beer, please do so.</p>
 
-<p><img src="/images/gdi-ruby-workshop.jpg" alt="Girl Develop It Burlington Ruby workshop" /></p>
+<p><img src="http://beerlington.github.io/images/gdi-ruby-workshop.jpg" alt="Girl Develop It Burlington Ruby workshop" /></p>
 
 <h2>Scholarships</h2>
 
@@ -451,7 +308,7 @@ favorite tweets that still make me chuckle.</p>
 <blockquote class="twitter-tweet"><p>I must say, <a href="https://twitter.com/btvrubyconf">@btvrubyconf</a> has one of the higher number of women attendees of the confs I&#39;ve been to recently.</p>&mdash; Steve Klabnik (@steveklabnik) <a href="https://twitter.com/steveklabnik/statuses/363691528465559552">August 3, 2013</a></blockquote>
 
 
-<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+<script async src="http://beerlington.github.io//platform.twitter.com/widgets.js" charset="utf-8"></script>
 
 
 <p>Side note: If you&rsquo;re organizing a conference, I highly recommend taking advantage of the scholarship funds from Ruby Central. It&rsquo;s a great way to increase diversity, get the word out about your conference, raise a little money, and most importantly, give people an opportunity to attend a conference who would not have been able to otherwise.</p>
@@ -465,7 +322,7 @@ favorite tweets that still make me chuckle.</p>
 <blockquote class="twitter-tweet"><p>Achievement unlocked. Met the person who bought last <a href="https://twitter.com/btvrubyconf">@btvrubyconf</a> ticket. <a href="http://t.co/Rc20jGH2bO">http://t.co/Rc20jGH2bO</a></p>&mdash; Michael Denomy (@mdenomy) <a href="https://twitter.com/mdenomy/statuses/363999840298356736">August 4, 2013</a></blockquote>
 
 
-<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+<script async src="http://beerlington.github.io//platform.twitter.com/widgets.js" charset="utf-8"></script>
 
 
 <p>Since we&rsquo;re planning on keeping next year&rsquo;s attendance at 150 (including speakers), I&rsquo;m hoping the fact that we sold out this year will create demand and make it easier to sell tickets next year.</p>
@@ -489,42 +346,15 @@ favorite tweets that still make me chuckle.</p>
 <p>This post discussed just a few of the things we did for this year&rsquo;s Burlington Ruby Conference that I felt were either unique to our event or contributed to our success. I don&rsquo;t think people will notice too many drastic changes next year as we&rsquo;ll likely focus on polishing things up and continuing to make it an exceptional experience for everyone. If you&rsquo;re interested in hearing more or have specific questions about conferences or cats, <a href="https://twitter.com/beerlington">please reach out</a>!</p>
 
 <p>Thank you so much to everyone who made the event happen, especially <a href="https://twitter.com/brettchalupa">Brett</a>, my supportive <a href="https://twitter.com/vermontgoldens">wife</a>, my mom who provided unlimited phone support, and my partners at <a href="http://agilion.com/">Agilion</a>. I am incredibly grateful to have had the experience and cannot wait to start organizing it again next year. See you at Burlington Ruby in 2014!</p>
-</div>
+]]></content>
+  </entry>
   
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/06/23/creating-a-custom-rspec-generator/">Creating a Custom Rspec Generator</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-06-23T12:43:00-04:00" pubdate data-updated="true">Jun 23<span>rd</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I&rsquo;m a huge proponent of test driven development and have been feeling
+  <entry>
+    <title type="html"><![CDATA[Creating a Custom Rspec Generator]]></title>
+    <link href="http://beerlington.github.io/blog/2013/06/23/creating-a-custom-rspec-generator/"/>
+    <updated>2013-06-23T12:43:00-04:00</updated>
+    <id>http://beerlington.github.io/blog/2013/06/23/creating-a-custom-rspec-generator</id>
+    <content type="html"><![CDATA[<p>I&rsquo;m a huge proponent of test driven development and have been feeling
 sort of guilty about a gem that I wrote which does not encourage
 testing whatsoever. The gem, <a href="https://github.com/beerlington/classy_enum">ClassyEnum</a>,
 provides class-based enumerator functionality on top of Active Record. This blog post is not so much
@@ -839,42 +669,15 @@ default which makes me feel like I&rsquo;m able to practice what I preach. I
 was able to achieve all four of my goals without any crazy hacks or making
 any sacrifices. I was also able to easily add support for TestUnit by
 adding an additional generator and template file.</p>
-</div>
+]]></content>
+  </entry>
   
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/04/06/building-a-strong-foundation-for-vermonts-technology-future/">Building a Strong Foundation for Vermont&#8217;s Technology Future</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-04-06T20:34:00-04:00" pubdate data-updated="true">Apr 6<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I went to a <a href="http://www.vermonttechnologyalliance.org/events/event_details.asp?id=308176&amp;group=">VTTA Lunch and Learn</a>
+  <entry>
+    <title type="html"><![CDATA[Building a strong foundation for Vermont's technology future]]></title>
+    <link href="http://beerlington.github.io/blog/2013/04/06/building-a-strong-foundation-for-vermonts-technology-future/"/>
+    <updated>2013-04-06T20:34:00-04:00</updated>
+    <id>http://beerlington.github.io/blog/2013/04/06/building-a-strong-foundation-for-vermonts-technology-future</id>
+    <content type="html"><![CDATA[<p>I went to a <a href="http://www.vermonttechnologyalliance.org/events/event_details.asp?id=308176&amp;group=">VTTA Lunch and Learn</a>
 meeting last week focused on &ldquo;Marketing Vermont as a technology state&rdquo;.
 I&rsquo;ve had some time to reflect on this objective and wanted to talk about some of the frustrations I&rsquo;ve felt in
 trying to address this very issue.</p>
@@ -1005,42 +808,15 @@ places for these groups to gather, free of charge.</p>
 so now is the time to start investing in our community, and investing in our
 future. Please <a href="https://twitter.com/beerlington">reach out</a> if you want to
 join us in building a strong foundation for Vermont&rsquo;s technology future.</p>
-</div>
+]]></content>
+  </entry>
   
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/03/10/a-simplified-query-interface-for-relationships-in-activerecord-4/">A Simplified Query Interface for Relationships in Active Record 4</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-03-10T14:42:00-04:00" pubdate data-updated="true">Mar 10<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+  <entry>
+    <title type="html"><![CDATA[A Simplified Query Interface for Relationships in Active Record 4]]></title>
+    <link href="http://beerlington.github.io/blog/2013/03/10/a-simplified-query-interface-for-relationships-in-activerecord-4/"/>
+    <updated>2013-03-10T14:42:00-04:00</updated>
+    <id>http://beerlington.github.io/blog/2013/03/10/a-simplified-query-interface-for-relationships-in-activerecord-4</id>
+    <content type="html"><![CDATA[<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
 <span class='line-number'>4</span>
@@ -1218,42 +994,15 @@ I encourage people to download it today and try out some simple examples:</p>
 <p>I also recommend checking out the <a href="https://github.com/rails/rails/blob/master/activerecord/test/cases/relation/where_test.rb#L26-L81">Active Record tests</a>
 for some more complex examples of how it can be used with polymorphic
 relationships and single-table inheritance.</p>
-</div>
+]]></content>
+  </entry>
   
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/11/10/reading-books-is-fun/">Reading Books Is Fun</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-11-10T19:18:00-05:00" pubdate data-updated="true">Nov 10<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I picked up a <a href="http://www.amazon.com/Kindle-Paperwhite-Touch-light/dp/B007OZNZG0">Kindle Paperwhite</a> a few weeks ago to replace the one I “borrowed” from my wife. It has turned out to be a fantastic piece of hardware, and I agree with pretty much everything <a href="http://daringfireball.net/2012/10/kindle_paperwhite">John Gruber has said about it</a>. I’ve never considered myself much of a reader, but I’ve made it through some great (and not so great) books over the last couple months, and wanted to share a my thoughts on them.</p>
+  <entry>
+    <title type="html"><![CDATA[Reading Books is Fun]]></title>
+    <link href="http://beerlington.github.io/blog/2012/11/10/reading-books-is-fun/"/>
+    <updated>2012-11-10T19:18:00-05:00</updated>
+    <id>http://beerlington.github.io/blog/2012/11/10/reading-books-is-fun</id>
+    <content type="html"><![CDATA[<p>I picked up a <a href="http://www.amazon.com/Kindle-Paperwhite-Touch-light/dp/B007OZNZG0">Kindle Paperwhite</a> a few weeks ago to replace the one I “borrowed” from my wife. It has turned out to be a fantastic piece of hardware, and I agree with pretty much everything <a href="http://daringfireball.net/2012/10/kindle_paperwhite">John Gruber has said about it</a>. I’ve never considered myself much of a reader, but I’ve made it through some great (and not so great) books over the last couple months, and wanted to share a my thoughts on them.</p>
 
 <h2>I’m Currently Reading:</h2>
 
@@ -1263,7 +1012,7 @@ relationships and single-table inheritance.</p>
 
 <h3><a href="http://pragprog.com/book/cfcar2/the-passionate-programmer">The Passionate Programmer</a></h3>
 
-<div style="float:left; margin-right: 20px"><img src="/images/books/passionate-programmer.jpg" /></div>
+<div style="float:left; margin-right: 20px"><img src="http://beerlington.github.io/images/books/passionate-programmer.jpg" /></div>
 
 
 <p>We’ve all been shit on by managers and coworkers at one point or another. Chad Fowler has been through it all too, but instead of just complaining, he wrote a book about what he learned. According to my Kindle, I’m only about 55% done, but I’m really enjoying it so far. The short, targeted chapters make it easy to pick up and read when you only have a couple minutes to spare. I would recommend this book for anyone who thinks they know everything and that managers are always wrong.</p>
@@ -1272,42 +1021,42 @@ relationships and single-table inheritance.</p>
 
 <h3><a href="http://shop.oreilly.com/product/9780596517748.do">JavaScript: The Good Parts</a></h3>
 
-<div style="float:left; margin-right: 20px"><img src="/images/books/js-the-good-parts.gif" /></div>
+<div style="float:left; margin-right: 20px"><img src="http://beerlington.github.io/images/books/js-the-good-parts.gif" /></div>
 
 
 <p>If you’ve been a developer for a while but never really taken the time to properly learn JavaScript, start with this book. It will give you a new appreciation for the language and leave you longing for more. The funny thing about this book is that it’s only 176 pages (compared to the Definitive Guide’s 1,100), and a large portion is spent discussing the parts of JavaScript you should avoid or be cautious of. Since reading it, I’ve been watching some of <a href="http://pluralsight.com/training/Courses#javascript">Pluralsight’s JavaScript courses</a> and I feel like it gave me a solid foundation for learning more.</p>
 
 <h3><a href="http://www.amazon.com/dp/0321721330">Practical Object Oriented Design in Ruby</a></h3>
 
-<div style="float:left; margin-right: 20px"><img src="/images/books/ood.jpg" /></div>
+<div style="float:left; margin-right: 20px"><img src="http://beerlington.github.io/images/books/ood.jpg" /></div>
 
 
 <p>Not only is this one of the best Ruby books I’ve ever read, it’s also one of the best programming books period. <a href="https://twitter.com/sandimetz">Sandi Metz</a> is a master of analogies, and the way she explains the principals of object oriented design has me convinced I could learn anything from her. I committed to giving a presentation on <a href="http://burlingtonruby.org/2012/08/30/intro-to-ruby-oop-intro-to-active-admin.html">Object Oriented Programming in Ruby</a> back in September and had been working on it for a few solid weeks. This book came out about a week before my presentation, I read it in three days, and decided to completely scrap my presentation and start over. This book is perfect for Ruby developers who want to learn more about object oriented design, but do it in a language that is familiar to them.</p>
 
 <h3><a href="http://www.amazon.com/Service-Oriented-Design-Addison-Wesley-Professional-Series/dp/0321659368">Service Oriented Design with Ruby and Rails</a></h3>
 
-<div style="float:left; margin-right: 20px"><img src="/images/books/sodrr.jpg" /></div>
+<div style="float:left; margin-right: 20px"><img src="http://beerlington.github.io/images/books/sodrr.jpg" /></div>
 
 
 <p>I picked this one up after receiving a <a href="http://stackoverflow.com/questions/10065022/ruby-on-rails-soa-design-resources-and-examples/10468079#10468079">fantastic reply</a> to a question I posted on Stack Overflow regarding Rails SOA resources. While slightly outdated by the time I read it, it has actually aged fairly well compared to other technology-specific software books. The book provides a thorough overview for people who’ve never built or consumed web services in Ruby, and a great refresher for experienced developers who have. For anyone who has read it, I’d recommend listening to a recent <a href="http://rubyrogues.com/076-rr-service-oriented-design-with-paul-dix/">Ruby Rogues podcast</a> featuring author Paul Dix. They discuss some of the changes in technology and practices since its release, and Paul reflects on how we would write it today if given the opportunity.</p>
 
 <h3><a href="http://www.shippinggreatness.com/">Shipping Greatness</a></h3>
 
-<div style="float:left; margin-right: 20px"><img src="/images/books/shipping.gif" /></div>
+<div style="float:left; margin-right: 20px"><img src="http://beerlington.github.io/images/books/shipping.gif" /></div>
 
 
 <p>This book was a big departure from other tech books I’ve read in that it was written specifically for managers and not software developers. I feel like I was getting management “insider information” while reading it, and definitely have a new appreciation for the work done by non-coders. Written from the perspective of a former product leader at Google and Amazon, it was perhaps too “enterprisey” for some folks, but as someone who has worked in startups my whole career, it was fascinating to read how large companies build and ship products. Other than a couple sections I skipped such as “Understand How to Communicate with Designers”, this was a very enjoyable read.</p>
 
 <h3><a href="http://shop.oreilly.com/product/9780596802004.do">Confessions of a Public Speaker</a></h3>
 
-<div style="float:left; margin-right: 20px"><img src="/images/books/confessions.gif" /></div>
+<div style="float:left; margin-right: 20px"><img src="http://beerlington.github.io/images/books/confessions.gif" /></div>
 
 
 <p>Another departure from the coding genre, Confessions offers a glimpse into the life of a professional public speaker. I was certainly not expecting to become a better public speaker from simply reading this book, but was interested in hearing about someone else’s experiences on the subject. I’d recommend it for anyone who has done any amount of public speaking regardless of whether you want to do more or absolutely hated the experience. Communication, whether it’s public speaking or otherwise, is an important skill that very few software developers take time to learn.</p>
 
 <h3><a href="http://martinfowler.com/books/dsl.html">Domain Specific Languages</a></h3>
 
-<div style="float:left; margin-right: 20px"><img src="/images/books/dsl.jpg" /></div>
+<div style="float:left; margin-right: 20px"><img src="http://beerlington.github.io/images/books/dsl.jpg" /></div>
 
 
 <p>I did not enjoy this book at all, infact, I didn’t even finish reading it. It is pretty much the exact opposite of Practical Object Oriented Design in terms of readability. It is too lengthy and far too comprehensive for my taste. Unless you’re planning on creating the next <a href="http://cukes.info/">Cucumber</a> or you&rsquo;re writing your thesis on DSLs, save yourself some time and read something else. The only reason I picked it up was because I was interested in building internal DSLs in Ruby and InformIT had it <a href="http://www.informit.com/deals/">on sale for for $9.99</a>. I might revisit it someday, but I have a fairly long list of books I want to get through, so that’s not likely to happen any time soon.</p>
@@ -1326,42 +1075,15 @@ relationships and single-table inheritance.</p>
 <li>Maintainable JavaScript</li>
 </ul>
 
-</div>
+]]></content>
+  </entry>
   
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/10/21/how-we-won-hackvt/">How We Won Hack|VT</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-10-21T20:21:00-04:00" pubdate data-updated="true">Oct 21<span>st</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>This post describes how our team, <strong>Datamorphosis</strong>, won the <a href="http://hackvt.com/">HackVT hackathon</a>, and the strategy we used to ensure that if we didn’t win, we’d at least be proud of what we built. Read on to find out how we formed our team, brainstormed an idea, researched and planned our application, executed during the event, which technologies we used, and how we presented our winning application: <strong>The Vermont Business Landscape</strong>.</p>
+  <entry>
+    <title type="html"><![CDATA[How We Won Hack|VT]]></title>
+    <link href="http://beerlington.github.io/blog/2012/10/21/how-we-won-hackvt/"/>
+    <updated>2012-10-21T20:21:00-04:00</updated>
+    <id>http://beerlington.github.io/blog/2012/10/21/how-we-won-hackvt</id>
+    <content type="html"><![CDATA[<p>This post describes how our team, <strong>Datamorphosis</strong>, won the <a href="http://hackvt.com/">HackVT hackathon</a>, and the strategy we used to ensure that if we didn’t win, we’d at least be proud of what we built. Read on to find out how we formed our team, brainstormed an idea, researched and planned our application, executed during the event, which technologies we used, and how we presented our winning application: <strong>The Vermont Business Landscape</strong>.</p>
 
 <p><img src="http://petebrown-pics.s3.amazonaws.com/public/vermont-business-landscape-datamorphosis.png" alt="Insert App screenshot" /></p>
 
@@ -1456,42 +1178,15 @@ relationships and single-table inheritance.</p>
 <h2>Final Thoughts</h2>
 
 <p>Winning the hackathon means so much more to our team than the cash or prizes. HackVT was by far the most well organized Vermont event I have ever attended. Every last detail, from the quality of food to the mounted, decorative data sets, made the developers feel welcome and comfortable during our 24 hour stay. This event demonstrated the level of commitment that companies like MyWebGrocer and Dealer.com have made to Vermont, ensuring our state becomes a sustainable technology hub and attract talented individuals for years to come. Thank you to all the volunteers, sponsors, and participants who made it happen. See you again in 2013!</p>
-</div>
+]]></content>
+  </entry>
   
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2011/07/25/building-a-csv-renderer-in-rails-3/">Building a Custom CSV Renderer in Rails 3</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2011-07-25T22:18:00-04:00" pubdate data-updated="true">Jul 25<span>th</span>, 2011</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>This post will walk you through creating a simple renderer in Rails
+  <entry>
+    <title type="html"><![CDATA[Building a Custom CSV Renderer in Rails 3]]></title>
+    <link href="http://beerlington.github.io/blog/2011/07/25/building-a-csv-renderer-in-rails-3/"/>
+    <updated>2011-07-25T22:18:00-04:00</updated>
+    <id>http://beerlington.github.io/blog/2011/07/25/building-a-csv-renderer-in-rails-3</id>
+    <content type="html"><![CDATA[<p>This post will walk you through creating a simple renderer in Rails
 3.</p>
 
 <h2>What are renderers?</h2>
@@ -1886,143 +1581,7 @@ For more information about renderers and the Rails rendering stack, I highly rec
  by <a href="https://twitter.com/josevalim">José Valim</a>. Also, the <a href="http://guides.rubyonrails.org/layouts_and_rendering.html">Layouts and Rendering Rails Guide</a>
 provides a comprehensive overview of rendering in controllers as well as
 views.</p>
-</div>
+]]></content>
+  </entry>
   
-  
-
-
-    </article>
-  
-  <div class="pagination">
-    
-    <a href="/blog/archives">Blog Archives</a>
-    
-  </div>
-</div>
-<aside class="sidebar">
-  
-    <section>
-  <h1>Recent Posts</h1>
-  <ul id="recent_posts">
-    
-      <li class="post">
-        <a href="/blog/2013/12/31/my-year-in-review/">My Year in Review</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/08/18/the-bill-and-ted-experience-in-software-development/">Have You Ever Had a Bill and Ted Coding Experience?</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/08/15/a-reflection-on-organizing-the-burlington-ruby-conference/">A Reflection on Organizing the Burlington Ruby Conference</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/06/23/creating-a-custom-rspec-generator/">Creating a Custom Rspec Generator</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/04/06/building-a-strong-foundation-for-vermonts-technology-future/">Building a strong foundation for Vermont&#8217;s technology future</a>
-      </li>
-    
-  </ul>
-</section>
-
-<section>
-  <h1>GitHub Repos</h1>
-  <ul id="gh_repos">
-    <li class="loading">Status updating&#8230;</li>
-  </ul>
-  
-  <a href="https://github.com/beerlington">@beerlington</a> on GitHub
-  
-  <script type="text/javascript">
-    $.domReady(function(){
-        if (!window.jXHR){
-            var jxhr = document.createElement('script');
-            jxhr.type = 'text/javascript';
-            jxhr.src = '/javascripts/libs/jXHR.js';
-            var s = document.getElementsByTagName('script')[0];
-            s.parentNode.insertBefore(jxhr, s);
-        }
-
-        github.showRepos({
-            user: 'beerlington',
-            count: 5,
-            skip_forks: true,
-            target: '#gh_repos'
-        });
-    });
-  </script>
-  <script src="/javascripts/github.js" type="text/javascript"> </script>
-</section>
-
-
-
-
-
-  
-</aside>
-
-    </div>
-  </div>
-  <footer role="contentinfo"><p>
-  Copyright &copy; 2013 - Peter Brown -
-  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
-</p>
-
-</footer>
-  
-
-<script type="text/javascript">
-      var disqus_shortname = 'beerlingtontheblog';
-      
-        
-        var disqus_script = 'count.js';
-      
-    (function () {
-      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
-      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-    }());
-</script>
-
-
-
-<div id="fb-root"></div>
-<script>(function(d, s, id) {
-  var js, fjs = d.getElementsByTagName(s)[0];
-  if (d.getElementById(id)) {return;}
-  js = d.createElement(s); js.id = id;
-  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
-  fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));</script>
-
-
-
-  <script type="text/javascript">
-    (function() {
-      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
-      script.src = 'https://apis.google.com/js/plusone.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
-    })();
-  </script>
-
-
-
-  <script type="text/javascript">
-    (function(){
-      var twitterWidgets = document.createElement('script');
-      twitterWidgets.type = 'text/javascript';
-      twitterWidgets.async = true;
-      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
-      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
-    })();
-  </script>
-
-
-
-
-
-</body>
-</html>
+</feed>

@@ -1,0 +1,696 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Building a Custom CSV Renderer in Rails 3 - Beerlington</title>
+  <meta name="author" content="Peter Brown">
+
+  
+  <meta name="description" content="This post will walk you through creating a simple renderer in Rails
+3. What are renderers? A renderer in Rails is a way of customizing how content is &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://beerlington.github.io/blog/2011/07/25/building-a-csv-renderer-in-rails-3/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Beerlington" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-24856035-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Beerlington</a></h1>
+  
+    <h2>A blog by Peter Brown</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:beerlington.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About Me</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Building a Custom CSV Renderer in Rails 3</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-07-25T22:18:00-04:00" pubdate data-updated="true">Jul 25<span>th</span>, 2011</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>This post will walk you through creating a simple renderer in Rails
+3.</p>
+
+<h2>What are renderers?</h2>
+
+<p>A renderer in Rails is a way of customizing how content is rendered for
+the browser or any client interacting with your web service. Rails has
+a handful of built in rendering formats such as <em>html</em>, <em>xml</em>, and
+<em>json</em>, and exposes an effortless method for adding additional custom rendering
+functionality that can be shared among your controllers and
+applications.</p>
+
+<p>Custom renderers provide a standard, reusable interface for rendering content,
+in turn allowing you to DRY up your application logic architecture.
+This post will show you how to add a custom renderer that converts
+ActiveRecord collections to a downloadable CSV format.</p>
+
+<p>Below is an example of how the final CSV renderer will be used:</p>
+
+<figure class='code'><figcaption><span>CSV rendering from a controller - app/locations_controller.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="k">class</span> <span class="nc">LocationsController</span> <span class="o">&lt;</span> <span class="no">ApplicationController</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">index</span>
+</span><span class='line'>    <span class="vi">@locations</span> <span class="o">=</span> <span class="no">Location</span><span class="o">.</span><span class="n">all</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">respond_to</span> <span class="k">do</span> <span class="o">|</span><span class="nb">format</span><span class="o">|</span>
+</span><span class='line'>      <span class="nb">format</span><span class="o">.</span><span class="n">html</span>
+</span><span class='line'>      <span class="nb">format</span><span class="o">.</span><span class="n">csv</span>  <span class="p">{</span> <span class="n">render</span> <span class="ss">:csv</span> <span class="o">=&gt;</span> <span class="vi">@locations</span><span class="p">,</span> <span class="ss">:except</span> <span class="o">=&gt;</span> <span class="o">[</span><span class="ss">:id</span><span class="o">]</span> <span class="p">}</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Some background info:</h2>
+
+<p>Before getting started with our CSV renderer, let&rsquo;s look at the
+<a href="https://github.com/rails/rails/blob/master/actionpack/lib/action_controller/metal/renderers.rb">Rails source</a>
+to see how it defines its own custom renderers:</p>
+
+<figure class='code'><figcaption><span>actionpack/lib/action_controller/metal/renderers.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="k">module</span> <span class="nn">ActionController</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">add_renderer</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>    <span class="no">Renderers</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">module</span> <span class="nn">Renderers</span>
+</span><span class='line'>    <span class="c1"># Lots of ommitted code...</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nc">self</span><span class="o">.</span><span class="nf">add</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">define_method</span><span class="p">(</span><span class="s2">&quot;_render_option_</span><span class="si">#{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span><span class="p">)</span>
+</span><span class='line'>      <span class="no">RENDERERS</span><span class="o">[</span><span class="n">key</span><span class="o">]</span> <span class="o">=</span> <span class="n">block</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1"># More ommitted code...</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">add</span> <span class="ss">:xml</span> <span class="k">do</span> <span class="o">|</span><span class="n">xml</span><span class="p">,</span> <span class="n">options</span><span class="o">|</span>
+</span><span class='line'>      <span class="nb">self</span><span class="o">.</span><span class="n">content_type</span> <span class="o">||=</span> <span class="ss">Mime</span><span class="p">:</span><span class="ss">:XML</span>
+</span><span class='line'>      <span class="n">xml</span><span class="o">.</span><span class="n">respond_to?</span><span class="p">(</span><span class="ss">:to_xml</span><span class="p">)</span> <span class="p">?</span> <span class="n">xml</span><span class="o">.</span><span class="n">to_xml</span><span class="p">(</span><span class="n">options</span><span class="p">)</span> <span class="p">:</span> <span class="n">xml</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>At the top you see an <em>add_renderer</em> method, which will be our
+interface to add a custom renderer. Ignoring the fact that
+I&rsquo;ve removed some of the implementation details,
+further down you see a class method called <em>add</em> which does two things:
+1) It defines an internal method used by the rendering stack,
+and 2) stores the key (:xml, :json, etc) in a hash.</p>
+
+<p>As we move to the bottom of this file, you&rsquo;ll see where <em>add</em> is being used
+to define an XML renderer. This method takes a block with two arguments.
+The first argument is an object that responds to <em>to_xml</em>, and the second
+is a set of options that are passed as arguments to <em>to_xml</em>. If for some reason
+the object doesn&rsquo;t respond to <em>to_xml</em> then it simply returns itself.</p>
+
+<p>If you&rsquo;ve ever used the Rails scaffold generator, you will notice that
+it includes code for responding to XML requests:</p>
+
+<figure class='code'><figcaption><span>default scaffolded controller.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="k">def</span> <span class="nf">show</span>
+</span><span class='line'>  <span class="vi">@location</span> <span class="o">=</span> <span class="no">Location</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">params</span><span class="o">[</span><span class="ss">:id</span><span class="o">]</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">respond_to</span> <span class="k">do</span> <span class="o">|</span><span class="nb">format</span><span class="o">|</span>
+</span><span class='line'>    <span class="nb">format</span><span class="o">.</span><span class="n">html</span> <span class="c1"># show.html.erb</span>
+</span><span class='line'>    <span class="nb">format</span><span class="o">.</span><span class="n">xml</span>  <span class="p">{</span> <span class="n">render</span> <span class="ss">:xml</span> <span class="o">=&gt;</span> <span class="vi">@location</span> <span class="p">}</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This is exacly what adding the XML renderer has provided, a clean syntax
+for allowing the server to respond with XML formatted data.</p>
+
+<h2>Why should I use it?</h2>
+
+<p>Let&rsquo;s say you have a <em>Location</em> model with the
+following schema:</p>
+
+<figure class='code'><figcaption><span>db/schema.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="ss">ActiveRecord</span><span class="p">:</span><span class="ss">:Schema</span><span class="o">.</span><span class="n">define</span><span class="p">(</span><span class="ss">:version</span> <span class="o">=&gt;</span> <span class="mi">20110726022558</span><span class="p">)</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">create_table</span> <span class="s2">&quot;locations&quot;</span><span class="p">,</span> <span class="ss">:force</span> <span class="o">=&gt;</span> <span class="kp">true</span> <span class="k">do</span> <span class="o">|</span><span class="n">t</span><span class="o">|</span>
+</span><span class='line'>    <span class="n">t</span><span class="o">.</span><span class="n">string</span>   <span class="s2">&quot;name&quot;</span>
+</span><span class='line'>    <span class="n">t</span><span class="o">.</span><span class="n">string</span>   <span class="s2">&quot;address&quot;</span>
+</span><span class='line'>    <span class="n">t</span><span class="o">.</span><span class="n">string</span>   <span class="s2">&quot;city&quot;</span>
+</span><span class='line'>    <span class="n">t</span><span class="o">.</span><span class="n">string</span>   <span class="s2">&quot;state&quot;</span>
+</span><span class='line'>    <span class="n">t</span><span class="o">.</span><span class="n">string</span>   <span class="s2">&quot;zip&quot;</span>
+</span><span class='line'>    <span class="n">t</span><span class="o">.</span><span class="n">datetime</span> <span class="s2">&quot;created_at&quot;</span>
+</span><span class='line'>    <span class="n">t</span><span class="o">.</span><span class="n">datetime</span> <span class="s2">&quot;updated_at&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Although your main application may use all of these fields, you might need to
+import this data into some sort of enterprise/exchange-powered legacy
+system in CSV format. You could easily define a <em>to_csv</em> class method on your
+Location model and just call that from the controller, but that presents
+a few problems. The Location model shouldn&rsquo;t know anything
+about converting itself to a CSV format because this violates the rule that
+components should have a single, well-defined purpose. Also, what if you want to
+download other models in CSV format? These are problems that respond_to and render
+aim to solve.</p>
+
+<h2>How does it work?</h2>
+
+<p>Looking back to the first code snippet I posted, you can see that the
+CSV render syntax in my controller is very similar to the XML render syntax. The only difference is
+that our CSV format allows you to specify which columns (attributes) you
+want to include or exclude in the downloaded CSV file. This detail has
+almost nothing to do with the renderer itself, and is implemented by
+the object&rsquo;s Array class, as shown below.</p>
+
+<p>To understand how this works, let&rsquo;s look at our custom CSV renderer:</p>
+
+<figure class='code'><figcaption><span>csv_renderer.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="nb">require</span> <span class="s1">&#39;action_controller/metal/renderers&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="no">ActionController</span><span class="o">.</span><span class="n">add_renderer</span> <span class="ss">:csv</span> <span class="k">do</span> <span class="o">|</span><span class="n">csv</span><span class="p">,</span> <span class="n">options</span><span class="o">|</span>
+</span><span class='line'>  <span class="nb">self</span><span class="o">.</span><span class="n">response_body</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">respond_to?</span><span class="p">(</span><span class="ss">:to_csv</span><span class="p">)</span> <span class="p">?</span> <span class="n">csv</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">options</span><span class="p">)</span> <span class="p">:</span> <span class="n">csv</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>You will notice a few differences between our custom renderer
+and the XML renderer defined by Rails. First, we are using
+<em>add_renderer</em> as opposed to just <em>add</em>. This is a personal preference
+as you can also use: <code>ActionController::Renderers.add
+:csv</code>. Both methods accomplish exactly the same thing, but I find
+<em>add_renderer</em> to be slightly more readable.
+Second, we are not setting the content_type. The
+reason for this is because Rails automatically adds a CSV Mime Type
+within the action_pack library. I&rsquo;m not going to go into the details of how that
+works, but feel free to <a href="https://github.com/rails/rails/blob/master/actionpack/lib/action_dispatch/http/mime_types.rb">explore the complete list of Mime Types</a>.
+The last detail to note is that we are requiring
+<em>action_controller/metal/renderers</em> which provides us access to the <em>add_renderer</em>
+method. You could alternatively require any module that inclues this
+file, such as <em>action_controller/base</em> if you need access to methods like
+<a href="http://api.rubyonrails.org/classes/ActionController/Streaming.html#method-i-send_data">send_data</a>.</p>
+
+<p>Finally, let&rsquo;s look at the <em>to_csv</em> Array method. The
+reason this method is defined on Array is because ActiveRecord converts
+collection queries such as <code>Location.where(:state =&gt; 'vt')</code> or <code>Location.all</code>
+to arrays.</p>
+
+<figure class='code'><figcaption><span>array.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="k">class</span> <span class="nc">Array</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1"># Converts an array to CSV formatted string</span>
+</span><span class='line'>  <span class="c1"># Options include:</span>
+</span><span class='line'>  <span class="c1"># :only =&gt; [:col1, :col2] # Specify which columns to include</span>
+</span><span class='line'>  <span class="c1"># :except =&gt; [:col1, :col2] # Specify which columns to exclude</span>
+</span><span class='line'>  <span class="c1"># :add_methods =&gt; [:method1, :method2] # Include addtional methods that aren&#39;t columns</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">to_csv</span><span class="p">(</span><span class="n">options</span><span class="o">=</span><span class="p">{})</span>
+</span><span class='line'>    <span class="k">return</span> <span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="n">empty?</span>
+</span><span class='line'>    <span class="k">return</span> <span class="n">join</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="k">unless</span> <span class="n">first</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">respond_to?</span> <span class="ss">:column_names</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">columns</span> <span class="o">=</span> <span class="n">first</span><span class="o">.</span><span class="n">class</span><span class="o">.</span><span class="n">column_names</span>
+</span><span class='line'>    <span class="n">columns</span> <span class="o">&amp;=</span> <span class="n">options</span><span class="o">[</span><span class="ss">:only</span><span class="o">].</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:to_s</span><span class="p">)</span> <span class="k">if</span> <span class="n">options</span><span class="o">[</span><span class="ss">:only</span><span class="o">]</span>
+</span><span class='line'>    <span class="n">columns</span> <span class="o">-=</span> <span class="n">options</span><span class="o">[</span><span class="ss">:except</span><span class="o">].</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:to_s</span><span class="p">)</span> <span class="k">if</span> <span class="n">options</span><span class="o">[</span><span class="ss">:except</span><span class="o">]</span>
+</span><span class='line'>    <span class="n">columns</span> <span class="o">+=</span> <span class="n">options</span><span class="o">[</span><span class="ss">:add_methods</span><span class="o">].</span><span class="n">map</span><span class="p">(</span><span class="o">&amp;</span><span class="ss">:to_s</span><span class="p">)</span> <span class="k">if</span> <span class="n">options</span><span class="o">[</span><span class="ss">:add_methods</span><span class="o">]</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">csv</span> <span class="o">=</span> <span class="o">[</span><span class="n">columns</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span><span class="o">]</span>
+</span><span class='line'>    <span class="n">csv</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">map</span> <span class="p">{</span><span class="o">|</span><span class="n">v</span><span class="o">|</span> <span class="n">columns</span><span class="o">.</span><span class="n">map</span> <span class="p">{</span><span class="o">|</span><span class="n">c</span><span class="o">|</span> <span class="n">v</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="p">}</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="p">})</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">csv</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Above we can see that <em>to_csv</em> takes a hash of options which are used to
+determine which columns should be included in the CSV file. One
+option <code>:only =&gt; [:col1, :col2]</code> allows you to specify the exact
+columns you want included, another option, <code>:except =&gt; [:col1, :col2]</code>,
+allows you to specify which columns you DO NOT want to include, and the
+last option, <code>:add_methods =&gt; [:method1, :method2]</code> allows you to add
+data defined in methods that aren&rsquo;t saved in the database. Calling
+<em>to_csv</em> without any arguments will include all columns.</p>
+
+<h2>Usage examples:</h2>
+
+<p>Tying that all together, we can now use this renderer in our controllers
+to let users or clients download CSV data. Here are a few examples:</p>
+
+<h3>Generate a CSV that includes every column:</h3>
+
+<figure class='code'><figcaption><span>app/controllers/location_controller.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="k">class</span> <span class="nc">LocationsController</span> <span class="o">&lt;</span> <span class="no">ApplicationController</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">index</span>
+</span><span class='line'>    <span class="vi">@locations</span> <span class="o">=</span> <span class="no">Location</span><span class="o">.</span><span class="n">all</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">respond_to</span> <span class="k">do</span> <span class="o">|</span><span class="nb">format</span><span class="o">|</span>
+</span><span class='line'>      <span class="nb">format</span><span class="o">.</span><span class="n">csv</span>  <span class="p">{</span> <span class="n">render</span> <span class="ss">:csv</span> <span class="o">=&gt;</span> <span class="vi">@locations</span> <span class="p">}</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Generate a CSV that includes every column except the id:</h3>
+
+<figure class='code'><figcaption><span>app/controllers/location_controller.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="k">class</span> <span class="nc">LocationsController</span> <span class="o">&lt;</span> <span class="no">ApplicationController</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">index</span>
+</span><span class='line'>    <span class="vi">@locations</span> <span class="o">=</span> <span class="no">Location</span><span class="o">.</span><span class="n">all</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">respond_to</span> <span class="k">do</span> <span class="o">|</span><span class="nb">format</span><span class="o">|</span>
+</span><span class='line'>      <span class="nb">format</span><span class="o">.</span><span class="n">csv</span>  <span class="p">{</span> <span class="n">render</span> <span class="ss">:csv</span> <span class="o">=&gt;</span> <span class="vi">@locations</span><span class="p">,</span> <span class="ss">:except</span> <span class="o">=&gt;</span> <span class="o">[</span><span class="ss">:id</span><span class="o">]</span> <span class="p">}</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Generate a CSV that includes only the state and zipcode:</h3>
+
+<figure class='code'><figcaption><span>app/controllers/location_controller.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="k">class</span> <span class="nc">LocationsController</span> <span class="o">&lt;</span> <span class="no">ApplicationController</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">index</span>
+</span><span class='line'>    <span class="vi">@locations</span> <span class="o">=</span> <span class="no">Location</span><span class="o">.</span><span class="n">all</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">respond_to</span> <span class="k">do</span> <span class="o">|</span><span class="nb">format</span><span class="o">|</span>
+</span><span class='line'>      <span class="nb">format</span><span class="o">.</span><span class="n">csv</span>  <span class="p">{</span> <span class="n">render</span> <span class="ss">:csv</span> <span class="o">=&gt;</span> <span class="vi">@locations</span><span class="p">,</span> <span class="ss">:only</span> <span class="o">=&gt;</span> <span class="o">[</span><span class="ss">:state</span><span class="p">,</span> <span class="ss">:zip</span><span class="o">]</span> <span class="p">}</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>Generate a CSV that adds a model method:</h3>
+
+<figure class='code'><figcaption><span>app/controllers/location_controller.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="k">class</span> <span class="nc">LocationsController</span> <span class="o">&lt;</span> <span class="no">ApplicationController</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">index</span>
+</span><span class='line'>    <span class="vi">@locations</span> <span class="o">=</span> <span class="no">Location</span><span class="o">.</span><span class="n">all</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">respond_to</span> <span class="k">do</span> <span class="o">|</span><span class="nb">format</span><span class="o">|</span>
+</span><span class='line'>      <span class="nb">format</span><span class="o">.</span><span class="n">csv</span>  <span class="p">{</span> <span class="n">render</span> <span class="ss">:csv</span> <span class="o">=&gt;</span> <span class="vi">@locations</span><span class="p">,</span> <span class="ss">:add_methods</span> <span class="o">=&gt;</span> <span class="o">[</span><span class="ss">:my_method</span><span class="o">]</span> <span class="p">}</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Finishing up</h2>
+
+<p>This post walked you through a simple yet practical approach to building
+a custom Rails renderer in Rails 3. While it may be overkill for one-off
+uses in a small code base, it shows it&rsquo;s true potential in large
+applications by helping prevent redundant code, and for building APIs that may need to
+respond to formats other than JSON and XML.</p>
+
+<h2>Additional Resources</h2>
+
+<p>All the code used in this post was developed for a RubyGem called <a href="https://github.com/beerlington/render_csv">render_csv</a>.
+For more information about renderers and the Rails rendering stack, I highly recommend
+<a href="http://pragprog.com/book/jvrails/crafting-rails-applications">Crafting Rails Applications</a>
+ by <a href="https://twitter.com/josevalim">José Valim</a>. Also, the <a href="http://guides.rubyonrails.org/layouts_and_rendering.html">Layouts and Rendering Rails Guide</a>
+provides a comprehensive overview of rendering in controllers as well as
+views.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn"><a href="https://twitter.com/beerlington">Peter Brown</a></span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2011-07-25T22:18:00-04:00" pubdate data-updated="true">Jul 25<span>th</span>, 2011</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/rails/'>rails</a>, <a class='category' href='/blog/categories/renderers/'>renderers</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://beerlington.github.io/blog/2011/07/25/building-a-csv-renderer-in-rails-3/" data-via="beerlington" data-counturl="http://beerlington.github.io/blog/2011/07/25/building-a-csv-renderer-in-rails-3/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+      
+        <a class="basic-alignment right" href="/blog/2012/10/21/how-we-won-hackvt/" title="Next Post: How We Won Hack|VT">How We Won Hack|VT &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/12/31/my-year-in-review/">My Year in Review</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/18/the-bill-and-ted-experience-in-software-development/">Have You Ever Had a Bill and Ted Coding Experience?</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/15/a-reflection-on-organizing-the-burlington-ruby-conference/">A Reflection on Organizing the Burlington Ruby Conference</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/23/creating-a-custom-rspec-generator/">Creating a Custom Rspec Generator</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/06/building-a-strong-foundation-for-vermonts-technology-future/">Building a strong foundation for Vermont's technology future</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/beerlington">@beerlington</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'beerlington',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - Peter Brown -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'beerlingtontheblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://beerlington.github.io/blog/2011/07/25/building-a-csv-renderer-in-rails-3/';
+        var disqus_url = 'http://beerlington.github.io/blog/2011/07/25/building-a-csv-renderer-in-rails-3/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

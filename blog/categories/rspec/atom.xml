@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: rspec | Beerlington]]></title>
+  <link href="http://beerlington.github.io/blog/categories/rspec/atom.xml" rel="self"/>
+  <link href="http://beerlington.github.io/"/>
+  <updated>2013-12-31T21:18:39-05:00</updated>
+  <id>http://beerlington.github.io/</id>
+  <author>
+    <name><![CDATA[Peter Brown]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Creating a Custom Rspec Generator]]></title>
+    <link href="http://beerlington.github.io/blog/2013/06/23/creating-a-custom-rspec-generator/"/>
+    <updated>2013-06-23T12:43:00-04:00</updated>
+    <id>http://beerlington.github.io/blog/2013/06/23/creating-a-custom-rspec-generator</id>
+    <content type="html"><![CDATA[<p>I&rsquo;m a huge proponent of test driven development and have been feeling
+sort of guilty about a gem that I wrote which does not encourage
+testing whatsoever. The gem, <a href="https://github.com/beerlington/classy_enum">ClassyEnum</a>,
+provides class-based enumerator functionality on top of Active Record. This blog post is not so much
+about the gem itself, so If you&rsquo;re interested in reading more about it,
+the <a href="http://beerlington.com/classy_enum/">README</a> has some good examples.</p>
+
+<p>Historically, ClassyEnum has had a built-in generator to
+quickly create classes that represent enum members. While this has served me
+well, it has never generated any spec files along with these classes.
+I always end up either creating them manually, or just forgoing tests
+altogether. Neither option was great, so I wanted to see what it would
+take to create spec files automatically, similar to how Rails can
+generate model specs when using the model or scaffold generators.</p>
+
+<p>When ClassyEnum is installed in your Rails project, you can run the generator like so:</p>
+
+<p>```irb
+$ rails g classy_enum Priority low medium high</p>
+
+<pre><code>  create  app/enums
+  create  app/enums/priority.rb
+</code></pre>
+
+<p>```</p>
+
+<p>Which produces the following file:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>My Project &ndash; app/enums/priority.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="k">class</span> <span class="nc">Priority</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="ss">ClassyEnum</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'><span class="k">end</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;class Priority::Low &amp;lt; Priority</span>
+</span><span class='line'><span class="sr">end&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span><span class="k">class</span> <span class="nc">Priority</span><span class="o">::</span><span class="no">Medium</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="no">Priority</span>
+</span><span class='line'><span class="k">end</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;class Priority::High &amp;lt; Priority</span>
+</span><span class='line'><span class="sr">end</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Each Priority subclass represents an enum member, and behaves like a
+true Ruby class. This boilerplate code starts out innocent enough,
+as most code does, but over time, I find myself adding logic
+and properties to these classes. Depending on how lazy I am,
+sometimes I test it, sometimes I don&rsquo;t.</p>
+
+<h2>Exploring the Un<em>spec</em>tacular Generator</h2>
+
+<p>The code for the &ldquo;main&rdquo; generator in ClassyEnum is fairly straightforward. It
+has a description, takes a few arguments, and copies a dynamically generated
+file into app/enums, creating the directory if it does not exist.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>ClassyEnum Enum Generator &ndash; lib/generators/classy_enum/classy_enum_generator.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="k">class</span> <span class="nc">ClassyEnumGenerator</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="ss">Rails</span><span class="p">:</span><span class="ss">:Generators</span><span class="o">::</span><span class="no">NamedBase</span>
+</span><span class='line'>  <span class="n">desc</span> <span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="no">Generate</span> <span class="n">a</span> <span class="no">ClassyEnum</span> <span class="n">definition</span> <span class="k">in</span> <span class="n">app</span><span class="o">/</span><span class="n">enums</span><span class="o">/&amp;</span><span class="n">rdquo</span><span class="p">;</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;  argument :name, :type =&gt; :string, :required =&gt; true, :banner =&gt; &amp;lsquo;EnumName&amp;rsquo;</span>
+</span><span class='line'><span class="sr">  argument :values, :type =&gt; :array, :default =&gt; [], :banner =&gt; &amp;lsquo;value1 value2 value3 etc&amp;hellip;&amp;rsquo;&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span>  <span class="n">source_root</span> <span class="no">File</span><span class="o">.</span><span class="n">expand_path</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="o">.</span><span class="n">.</span><span class="o">/</span><span class="n">templates</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;,</span> <span class="o">&lt;</span><span class="n">strong</span><span class="o">&gt;</span><span class="no">FILE</span><span class="o">&lt;</span><span class="sr">/strong&gt;)&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span>  <span class="k">def</span> <span class="nf">copy_files</span> <span class="c1"># :nodoc:&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">empty_directory</span> <span class="s1">&#39;app/enums&#39;</span>
+</span><span class='line'><span class="n">template</span> <span class="s2">&quot;enum.rb&quot;</span><span class="p">,</span> <span class="s2">&quot;app/enums/</span><span class="si">#{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">.rb&quot;</span>
+</span><span class='line'><span class="o">&lt;</span><span class="sr">/code&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>I would recommend the <a href="http://guides.rubyonrails.org/generators.html">Rails Generator Guide</a>
+if you aren&rsquo;t familiar with the syntax. You may also want to read the
+<a href="http://rdoc.info/github/wycats/thor/master/Thor/Actions.html">Thor documentation</a>
+which is the foundation for the Rails generator DSL.</p>
+
+<h2>Making the Generator <em>Spec</em>tacular</h2>
+
+<p>I had four main requirements for my generator&rsquo;s new behavior:</p>
+
+<ol>
+<li>It must automatically create specs in spec/enums when the generator
+is run.</li>
+<li>The specs it creates must work out of the box (even if they are
+pending).</li>
+<li>It cannot break existing behavior.</li>
+<li>It must be future proof by not relying on or hacking internal Rails or Rspec code</li>
+</ol>
+
+
+<p>After digging around on Stack Overflow and reading the Rails Guide,
+I discovered that Rails exposes a <a href="http://api.rubyonrails.org/classes/Rails/Generators/Base.html#method-c-hook_for"><code>hook_for</code></a>
+method. When passed the <code>:test_framework</code> argument,
+the main generator can automatically figure out which test framework your application is
+using, and based on naming conventions, which spec generator to load.
+All I had to do was add the hook to my existing generator, and create
+some support files to go along with it.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>ClassyEnum Enum Generator with hook &ndash; lib/generators/rspec/classy_enum_generator.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="k">class</span> <span class="nc">ClassyEnumGenerator</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="ss">Rails</span><span class="p">:</span><span class="ss">:Generators</span><span class="o">::</span><span class="no">NamedBase</span>
+</span><span class='line'>  <span class="n">desc</span> <span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="no">Generate</span> <span class="n">a</span> <span class="no">ClassyEnum</span> <span class="n">definition</span> <span class="k">in</span> <span class="n">app</span><span class="o">/</span><span class="n">enums</span><span class="o">/&amp;</span><span class="n">rdquo</span><span class="p">;</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;  argument :name, :type =&gt; :string, :required =&gt; true, :banner =&gt; &amp;lsquo;EnumName&amp;rsquo;</span>
+</span><span class='line'><span class="sr">  argument :values, :type =&gt; :array, :default =&gt; [], :banner =&gt; &amp;lsquo;value1 value2 value3 etc&amp;hellip;&amp;rsquo;&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span>  <span class="n">source_root</span> <span class="no">File</span><span class="o">.</span><span class="n">expand_path</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="o">.</span><span class="n">.</span><span class="o">/</span><span class="n">templates</span><span class="o">&amp;</span><span class="n">rdquo</span><span class="p">;,</span> <span class="o">&lt;</span><span class="n">strong</span><span class="o">&gt;</span><span class="no">FILE</span><span class="o">&lt;</span><span class="sr">/strong&gt;)&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span>  <span class="k">def</span> <span class="nf">copy_files</span> <span class="c1"># :nodoc:&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">empty_directory</span> <span class="s1">&#39;app/enums&#39;</span>
+</span><span class='line'><span class="n">template</span> <span class="s2">&quot;enum.rb&quot;</span><span class="p">,</span> <span class="s2">&quot;app/enums/</span><span class="si">#{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">.rb&quot;</span>
+</span><span class='line'><span class="o">&lt;</span><span class="sr">/code&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span>  <span class="k">end</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;  hook_for :test_framework # &amp;lt;======= Add the hook here</span>
+</span><span class='line'><span class="sr">end</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>More information about this hook can be found in the
+<a href="http://guides.rubyonrails.org/generators.html#customizing-your-workflow">&ldquo;Customizing Your Workflow&rdquo;</a>
+section of the Rails Guide.</p>
+
+<p>After adding just the hook, I knew it wasn&rsquo;t going to work, but because I like
+taking baby steps when coding, I rebuilt and
+installed the gem, updated my project&rsquo;s ClassyEnum dependency,
+and ran the generator anyway:</p>
+
+<p>```irb
+rails g classy_enum Priority low medium high</p>
+
+<pre><code>  create  app/enums
+  create  app/enums/priority.rb
+   error  rspec [not found]
+</code></pre>
+
+<p>```</p>
+
+<p>This error is just saying that the test_framework generator could
+not be found, which was expected because I had not created it yet.
+Since I don&rsquo;t have any tests for the generator itself, I used this message
+as a failing test, and my passing test would be when the enum spec was generated.</p>
+
+<p>According to the Rails Guide, the <code>hook_for</code> method will search in a
+few places for the generator, looking for one of a few different
+class names. By default it looks for a class named after the generator that
+invoked the hook, namespaced with the test framework&rsquo;s class name and &ldquo;Generators&rdquo;.
+In my case this would be <code>Rspec::Generators::ClassyEnumGenerator</code>.
+I could have alternatively used the <code>:as =&gt;</code> option to specify
+a different class name, but I wanted to use the default.</p>
+
+<p>I needed the behavior of the enum spec generator to basically mimic that
+of my enum class generator, the only difference being the spec location
+and which template was used. My final Rspec generator class is shown
+here:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>ClassyEnum Rspec Generator &ndash; lib/generators/rspec/classy_enum_generator.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="k">module</span> <span class="nn">Rspec</span>
+</span><span class='line'>  <span class="k">module</span> <span class="nn">Generators</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;pre&gt;&lt;code&gt;class ClassyEnumGenerator &amp;lt; Rails::Generators::NamedBase</span>
+</span><span class='line'><span class="sr">  desc &quot;Generate a ClassyEnum spec in spec/enums</span><span class="o">/</span><span class="s2">&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="s2">  argument :name, :type =&amp;gt; :string, :required =&amp;gt; true, :banner =&amp;gt; &#39;EnumName&#39;</span>
+</span><span class='line'><span class="s2">  argument :values, :type =&amp;gt; :array, :default =&amp;gt; [], :banner =&amp;gt; &#39;value1 value2 value3 etc...&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="s2">  source_root File.expand_path(&quot;</span><span class="o">.</span><span class="n">.</span><span class="o">/</span><span class="n">templates</span><span class="s2">&quot;, __FILE__)</span>
+</span><span class='line'>
+</span><span class='line'><span class="s2">  def copy_files # :nodoc:</span>
+</span><span class='line'><span class="s2">    empty_directory &#39;spec/enums&#39;</span>
+</span><span class='line'><span class="s2">    template &quot;</span><span class="n">enum_spec</span><span class="o">.</span><span class="n">rb</span><span class="s2">&quot;, &quot;</span><span class="n">spec</span><span class="o">/</span><span class="n">enums</span><span class="o">/</span><span class="c1">#{file_name}_spec.rb&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="o">&lt;</span><span class="sr">/code&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>And the spec template file:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>lib/generators/rspec/templates/enum_spec.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="nb">require</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">spec_helper</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;</span>
+</span><span class='line'><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">%</span> <span class="n">values</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">arg</span><span class="o">|</span> <span class="sx">%&gt;</span>
+</span><span class='line'><span class="sx">describe &amp;lt;%= &amp;ldquo;</span><span class="si">#{</span><span class="n">class_name</span><span class="si">}</span><span class="sx">::</span><span class="si">#{</span><span class="n">arg</span><span class="o">.</span><span class="n">camelize</span><span class="si">}</span><span class="sx">&amp;rdquo; %&gt;</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">pending</span> <span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="n">add</span> <span class="n">some</span> <span class="n">examples</span> <span class="n">to</span> <span class="p">(</span><span class="ow">or</span> <span class="n">delete</span><span class="p">)</span> <span class="c1">#{&lt;strong&gt;FILE&lt;/strong&gt;}&amp;rdquo;</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="sx">%&amp;ndash; end &amp;</span><span class="n">ndash</span><span class="p">;</span><span class="o">%&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>After adding these two files to ClassyEnum, I reinstalled and
+reran the generator in my project and everything worked!</p>
+
+<p>Here is my &ldquo;passing&rdquo; test:</p>
+
+<p>```irb
+rails g classy_enum Priority low medium high</p>
+
+<pre><code>  create  app/enums
+  create  app/enums/priority.rb
+  invoke  rspec
+  create    spec/enums
+  create    spec/enums/priority_spec.rb
+</code></pre>
+
+<p>```</p>
+
+<p>Which generates the following spec file:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>My Project &ndash; spec/enums/priority_spec.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="nb">require</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="n">spec_helper</span><span class="o">&amp;</span><span class="n">rsquo</span><span class="p">;</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;describe Priority::Low do</span>
+</span><span class='line'><span class="sr">  pending &amp;ldquo;add some examples to (or delete) </span><span class="si">#{</span><span class="o">&lt;</span><span class="n">strong</span><span class="o">&gt;</span><span class="no">FILE</span><span class="o">&lt;</span><span class="sr">/strong&gt;}&amp;rdquo;</span>
+</span><span class='line'><span class="sr">end&lt;/</span><span class="nb">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nb">p</span><span class="o">&gt;</span><span class="n">describe</span> <span class="ss">Priority</span><span class="p">:</span><span class="ss">:Medium</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">pending</span> <span class="o">&amp;</span><span class="n">ldquo</span><span class="p">;</span><span class="n">add</span> <span class="n">some</span> <span class="n">examples</span> <span class="n">to</span> <span class="p">(</span><span class="ow">or</span> <span class="n">delete</span><span class="p">)</span> <span class="c1">#{&lt;strong&gt;FILE&lt;/strong&gt;}&amp;rdquo;</span>
+</span><span class='line'><span class="k">end</span><span class="o">&lt;</span><span class="sr">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="sr">&lt;p&gt;describe Priority::High do</span>
+</span><span class='line'><span class="sr">  pending &amp;ldquo;add some examples to (or delete) </span><span class="si">#{</span><span class="o">&lt;</span><span class="n">strong</span><span class="o">&gt;</span><span class="no">FILE</span><span class="o">&lt;</span><span class="sr">/strong&gt;}&amp;rdquo;</span>
+</span><span class='line'><span class="sr">end</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Since I am using the hook_for method, it includes some other behavior,
+such as supporting the <code>--skip-test-framework</code> flag out of the box. This
+would allow someone to generate the enum classes without any specs, but
+I don&rsquo;t recommend doing that. :)</p>
+
+<h2>Wrapping Up</h2>
+
+<p>I&rsquo;m happy with ClassyEnum generator once again. It creates spec files by
+default which makes me feel like I&rsquo;m able to practice what I preach. I
+was able to achieve all four of my goals without any crazy hacks or making
+any sacrifices. I was also able to easily add support for TestUnit by
+adding an additional generator and template file.</p>
+]]></content>
+  </entry>
+  
+</feed>

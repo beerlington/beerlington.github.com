@@ -1,0 +1,619 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Creating a Custom Rspec Generator - Beerlington</title>
+  <meta name="author" content="Peter Brown">
+
+  
+  <meta name="description" content="I&rsquo;m a huge proponent of test driven development and have been feeling
+sort of guilty about a gem that I wrote which does not encourage
+testing &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://beerlington.github.io/blog/2013/06/23/creating-a-custom-rspec-generator/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Beerlington" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-24856035-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Beerlington</a></h1>
+  
+    <h2>A blog by Peter Brown</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:beerlington.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About Me</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Creating a Custom Rspec Generator</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-23T12:43:00-04:00" pubdate data-updated="true">Jun 23<span>rd</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>I&rsquo;m a huge proponent of test driven development and have been feeling
+sort of guilty about a gem that I wrote which does not encourage
+testing whatsoever. The gem, <a href="https://github.com/beerlington/classy_enum">ClassyEnum</a>,
+provides class-based enumerator functionality on top of Active Record. This blog post is not so much
+about the gem itself, so If you&rsquo;re interested in reading more about it,
+the <a href="http://beerlington.com/classy_enum/">README</a> has some good examples.</p>
+
+<p>Historically, ClassyEnum has had a built-in generator to
+quickly create classes that represent enum members. While this has served me
+well, it has never generated any spec files along with these classes.
+I always end up either creating them manually, or just forgoing tests
+altogether. Neither option was great, so I wanted to see what it would
+take to create spec files automatically, similar to how Rails can
+generate model specs when using the model or scaffold generators.</p>
+
+<p>When ClassyEnum is installed in your Rails project, you can run the generator like so:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='irb'><span class='line'><span class="go">$ rails g classy_enum Priority low medium high</span>
+</span><span class='line'><span class="go">      create  app/enums</span>
+</span><span class='line'><span class="go">      create  app/enums/priority.rb</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Which produces the following file:</p>
+
+<figure class='code'><figcaption><span>My Project - app/enums/priority.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="k">class</span> <span class="nc">Priority</span> <span class="o">&lt;</span> <span class="ss">ClassyEnum</span><span class="p">:</span><span class="ss">:Base</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Priority</span><span class="o">::</span><span class="no">Low</span> <span class="o">&lt;</span> <span class="no">Priority</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Priority</span><span class="o">::</span><span class="no">Medium</span> <span class="o">&lt;</span> <span class="no">Priority</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">Priority</span><span class="o">::</span><span class="no">High</span> <span class="o">&lt;</span> <span class="no">Priority</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Each Priority subclass represents an enum member, and behaves like a
+true Ruby class. This boilerplate code starts out innocent enough,
+as most code does, but over time, I find myself adding logic
+and properties to these classes. Depending on how lazy I am,
+sometimes I test it, sometimes I don&rsquo;t.</p>
+
+<h2>Exploring the Un<em>spec</em>tacular Generator</h2>
+
+<p>The code for the &ldquo;main&rdquo; generator in ClassyEnum is fairly straightforward. It
+has a description, takes a few arguments, and copies a dynamically generated
+file into app/enums, creating the directory if it does not exist.</p>
+
+<figure class='code'><figcaption><span>ClassyEnum Enum Generator - lib/generators/classy_enum/classy_enum_generator.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="k">class</span> <span class="nc">ClassyEnumGenerator</span> <span class="o">&lt;</span> <span class="ss">Rails</span><span class="p">:</span><span class="ss">:Generators</span><span class="o">::</span><span class="no">NamedBase</span>
+</span><span class='line'>  <span class="n">desc</span> <span class="s2">&quot;Generate a ClassyEnum definition in app/enums/&quot;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">argument</span> <span class="ss">:name</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="ss">:string</span><span class="p">,</span> <span class="ss">:required</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span> <span class="ss">:banner</span> <span class="o">=&gt;</span> <span class="s1">&#39;EnumName&#39;</span>
+</span><span class='line'>  <span class="n">argument</span> <span class="ss">:values</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="ss">:array</span><span class="p">,</span> <span class="ss">:default</span> <span class="o">=&gt;</span> <span class="o">[]</span><span class="p">,</span> <span class="ss">:banner</span> <span class="o">=&gt;</span> <span class="s1">&#39;value1 value2 value3 etc...&#39;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">source_root</span> <span class="no">File</span><span class="o">.</span><span class="n">expand_path</span><span class="p">(</span><span class="s2">&quot;../templates&quot;</span><span class="p">,</span> <span class="bp">__FILE__</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">copy_files</span> <span class="c1"># :nodoc:</span>
+</span><span class='line'>    <span class="n">empty_directory</span> <span class="s1">&#39;app/enums&#39;</span>
+</span><span class='line'>    <span class="n">template</span> <span class="s2">&quot;enum.rb&quot;</span><span class="p">,</span> <span class="s2">&quot;app/enums/</span><span class="si">#{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">.rb&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I would recommend the <a href="http://guides.rubyonrails.org/generators.html">Rails Generator Guide</a>
+if you aren&rsquo;t familiar with the syntax. You may also want to read the
+<a href="http://rdoc.info/github/wycats/thor/master/Thor/Actions.html">Thor documentation</a>
+which is the foundation for the Rails generator DSL.</p>
+
+<h2>Making the Generator <em>Spec</em>tacular</h2>
+
+<p>I had four main requirements for my generator&rsquo;s new behavior:</p>
+
+<ol>
+<li>It must automatically create specs in spec/enums when the generator
+is run.</li>
+<li>The specs it creates must work out of the box (even if they are
+pending).</li>
+<li>It cannot break existing behavior.</li>
+<li>It must be future proof by not relying on or hacking internal Rails or Rspec code</li>
+</ol>
+
+
+<p>After digging around on Stack Overflow and reading the Rails Guide,
+I discovered that Rails exposes a <a href="http://api.rubyonrails.org/classes/Rails/Generators/Base.html#method-c-hook_for"><code>hook_for</code></a>
+method. When passed the <code>:test_framework</code> argument,
+the main generator can automatically figure out which test framework your application is
+using, and based on naming conventions, which spec generator to load.
+All I had to do was add the hook to my existing generator, and create
+some support files to go along with it.</p>
+
+<figure class='code'><figcaption><span>ClassyEnum Enum Generator with hook - lib/generators/rspec/classy_enum_generator.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="k">class</span> <span class="nc">ClassyEnumGenerator</span> <span class="o">&lt;</span> <span class="ss">Rails</span><span class="p">:</span><span class="ss">:Generators</span><span class="o">::</span><span class="no">NamedBase</span>
+</span><span class='line'>  <span class="n">desc</span> <span class="s2">&quot;Generate a ClassyEnum definition in app/enums/&quot;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">argument</span> <span class="ss">:name</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="ss">:string</span><span class="p">,</span> <span class="ss">:required</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span> <span class="ss">:banner</span> <span class="o">=&gt;</span> <span class="s1">&#39;EnumName&#39;</span>
+</span><span class='line'>  <span class="n">argument</span> <span class="ss">:values</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="ss">:array</span><span class="p">,</span> <span class="ss">:default</span> <span class="o">=&gt;</span> <span class="o">[]</span><span class="p">,</span> <span class="ss">:banner</span> <span class="o">=&gt;</span> <span class="s1">&#39;value1 value2 value3 etc...&#39;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">source_root</span> <span class="no">File</span><span class="o">.</span><span class="n">expand_path</span><span class="p">(</span><span class="s2">&quot;../templates&quot;</span><span class="p">,</span> <span class="bp">__FILE__</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">copy_files</span> <span class="c1"># :nodoc:</span>
+</span><span class='line'>    <span class="n">empty_directory</span> <span class="s1">&#39;app/enums&#39;</span>
+</span><span class='line'>    <span class="n">template</span> <span class="s2">&quot;enum.rb&quot;</span><span class="p">,</span> <span class="s2">&quot;app/enums/</span><span class="si">#{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">.rb&quot;</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">hook_for</span> <span class="ss">:test_framework</span> <span class="c1"># &lt;======= Add the hook here</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>More information about this hook can be found in the
+<a href="http://guides.rubyonrails.org/generators.html#customizing-your-workflow">&ldquo;Customizing Your Workflow&rdquo;</a>
+section of the Rails Guide.</p>
+
+<p>After adding just the hook, I knew it wasn&rsquo;t going to work, but because I like
+taking baby steps when coding, I rebuilt and
+installed the gem, updated my project&rsquo;s ClassyEnum dependency,
+and ran the generator anyway:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='irb'><span class='line'><span class="go">rails g classy_enum Priority low medium high</span>
+</span><span class='line'><span class="go">      create  app/enums</span>
+</span><span class='line'><span class="go">      create  app/enums/priority.rb</span>
+</span><span class='line'><span class="go">       error  rspec [not found]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This error is just saying that the test_framework generator could
+not be found, which was expected because I had not created it yet.
+Since I don&rsquo;t have any tests for the generator itself, I used this message
+as a failing test, and my passing test would be when the enum spec was generated.</p>
+
+<p>According to the Rails Guide, the <code>hook_for</code> method will search in a
+few places for the generator, looking for one of a few different
+class names. By default it looks for a class named after the generator that
+invoked the hook, namespaced with the test framework&rsquo;s class name and &ldquo;Generators&rdquo;.
+In my case this would be <code>Rspec::Generators::ClassyEnumGenerator</code>.
+I could have alternatively used the <code>:as =&gt;</code> option to specify
+a different class name, but I wanted to use the default.</p>
+
+<p>I needed the behavior of the enum spec generator to basically mimic that
+of my enum class generator, the only difference being the spec location
+and which template was used. My final Rspec generator class is shown
+here:</p>
+
+<figure class='code'><figcaption><span>ClassyEnum Rspec Generator - lib/generators/rspec/classy_enum_generator.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="k">module</span> <span class="nn">Rspec</span>
+</span><span class='line'>  <span class="k">module</span> <span class="nn">Generators</span>
+</span><span class='line'>    <span class="k">class</span> <span class="nc">ClassyEnumGenerator</span> <span class="o">&lt;</span> <span class="ss">Rails</span><span class="p">:</span><span class="ss">:Generators</span><span class="o">::</span><span class="no">NamedBase</span>
+</span><span class='line'>      <span class="n">desc</span> <span class="s2">&quot;Generate a ClassyEnum spec in spec/enums/&quot;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">argument</span> <span class="ss">:name</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="ss">:string</span><span class="p">,</span> <span class="ss">:required</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span> <span class="ss">:banner</span> <span class="o">=&gt;</span> <span class="s1">&#39;EnumName&#39;</span>
+</span><span class='line'>      <span class="n">argument</span> <span class="ss">:values</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="ss">:array</span><span class="p">,</span> <span class="ss">:default</span> <span class="o">=&gt;</span> <span class="o">[]</span><span class="p">,</span> <span class="ss">:banner</span> <span class="o">=&gt;</span> <span class="s1">&#39;value1 value2 value3 etc...&#39;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">source_root</span> <span class="no">File</span><span class="o">.</span><span class="n">expand_path</span><span class="p">(</span><span class="s2">&quot;../templates&quot;</span><span class="p">,</span> <span class="bp">__FILE__</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">def</span> <span class="nf">copy_files</span> <span class="c1"># :nodoc:</span>
+</span><span class='line'>        <span class="n">empty_directory</span> <span class="s1">&#39;spec/enums&#39;</span>
+</span><span class='line'>        <span class="n">template</span> <span class="s2">&quot;enum_spec.rb&quot;</span><span class="p">,</span> <span class="s2">&quot;spec/enums/</span><span class="si">#{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">_spec.rb&quot;</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And the spec template file:</p>
+
+<figure class='code'><figcaption><span>lib/generators/rspec/templates/enum_spec.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="nb">require</span> <span class="s1">&#39;spec_helper&#39;</span>
+</span><span class='line'><span class="o">&lt;</span><span class="sx">% values.each </span><span class="k">do</span> <span class="o">|</span><span class="n">arg</span><span class="o">|</span> <span class="sx">%&gt;</span>
+</span><span class='line'><span class="sx">describe &lt;%= &quot;</span><span class="si">#{</span><span class="n">class_name</span><span class="si">}</span><span class="sx">::</span><span class="si">#{</span><span class="n">arg</span><span class="o">.</span><span class="n">camelize</span><span class="si">}</span><span class="sx">&quot; %&gt;</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">pending</span> <span class="s2">&quot;add some examples to (or delete) </span><span class="si">#{</span><span class="bp">__FILE__</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'><span class="o">&lt;</span><span class="sx">%- end -</span><span class="o">%&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>After adding these two files to ClassyEnum, I reinstalled and
+reran the generator in my project and everything worked!</p>
+
+<p>Here is my &ldquo;passing&rdquo; test:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='irb'><span class='line'><span class="go">rails g classy_enum Priority low medium high</span>
+</span><span class='line'><span class="go">      create  app/enums</span>
+</span><span class='line'><span class="go">      create  app/enums/priority.rb</span>
+</span><span class='line'><span class="go">      invoke  rspec</span>
+</span><span class='line'><span class="go">      create    spec/enums</span>
+</span><span class='line'><span class="go">      create    spec/enums/priority_spec.rb</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Which generates the following spec file:</p>
+
+<figure class='code'><figcaption><span>My Project - spec/enums/priority_spec.rb </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="nb">require</span> <span class="s1">&#39;spec_helper&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">describe</span> <span class="ss">Priority</span><span class="p">:</span><span class="ss">:Low</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">pending</span> <span class="s2">&quot;add some examples to (or delete) </span><span class="si">#{</span><span class="bp">__FILE__</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">describe</span> <span class="ss">Priority</span><span class="p">:</span><span class="ss">:Medium</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">pending</span> <span class="s2">&quot;add some examples to (or delete) </span><span class="si">#{</span><span class="bp">__FILE__</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">describe</span> <span class="ss">Priority</span><span class="p">:</span><span class="ss">:High</span> <span class="k">do</span>
+</span><span class='line'>  <span class="n">pending</span> <span class="s2">&quot;add some examples to (or delete) </span><span class="si">#{</span><span class="bp">__FILE__</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Since I am using the hook_for method, it includes some other behavior,
+such as supporting the <code>--skip-test-framework</code> flag out of the box. This
+would allow someone to generate the enum classes without any specs, but
+I don&rsquo;t recommend doing that. :)</p>
+
+<h2>Wrapping Up</h2>
+
+<p>I&rsquo;m happy with ClassyEnum generator once again. It creates spec files by
+default which makes me feel like I&rsquo;m able to practice what I preach. I
+was able to achieve all four of my goals without any crazy hacks or making
+any sacrifices. I was also able to easily add support for TestUnit by
+adding an additional generator and template file.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn"><a href="https://twitter.com/beerlington">Peter Brown</a></span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-23T12:43:00-04:00" pubdate data-updated="true">Jun 23<span>rd</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/rails/'>rails</a>, <a class='category' href='/blog/categories/rspec/'>rspec</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://beerlington.github.io/blog/2013/06/23/creating-a-custom-rspec-generator/" data-via="beerlington" data-counturl="http://beerlington.github.io/blog/2013/06/23/creating-a-custom-rspec-generator/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/04/06/building-a-strong-foundation-for-vermonts-technology-future/" title="Previous Post: Building a strong foundation for Vermont's technology future">&laquo; Building a strong foundation for Vermont's technology future</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/08/15/a-reflection-on-organizing-the-burlington-ruby-conference/" title="Next Post: A Reflection on Organizing the Burlington Ruby Conference">A Reflection on Organizing the Burlington Ruby Conference &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/12/31/my-year-in-review/">My Year in Review</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/18/the-bill-and-ted-experience-in-software-development/">Have You Ever Had a Bill and Ted Coding Experience?</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/15/a-reflection-on-organizing-the-burlington-ruby-conference/">A Reflection on Organizing the Burlington Ruby Conference</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/23/creating-a-custom-rspec-generator/">Creating a Custom Rspec Generator</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/06/building-a-strong-foundation-for-vermonts-technology-future/">Building a strong foundation for Vermont's technology future</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/beerlington">@beerlington</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'beerlington',
+            count: 5,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - Peter Brown -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'beerlingtontheblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://beerlington.github.io/blog/2013/06/23/creating-a-custom-rspec-generator/';
+        var disqus_url = 'http://beerlington.github.io/blog/2013/06/23/creating-a-custom-rspec-generator/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
