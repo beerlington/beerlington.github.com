@@ -1,0 +1,19 @@
+# Dependencies
+markdown: redcarpet
+pygments: true
+comments: true
+
+# Permalinks
+permalink: /blog/:year/:month/:day/:title/
+
+# Setup
+title: Beerlington
+tagline: The Blog
+description: 'The Blog'
+url: http://hyde.getpoole.com
+
+author:
+  name: 'Peter Brown'
+  url: https://twitter.com/beerlington
+
+paginate: 5

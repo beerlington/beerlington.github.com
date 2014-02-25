@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+  <title>
+    
+      Creating a Custom Rspec Generator &middot; Beerlington
+    
+  </title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/public/css/poole.css">
+  <link rel="stylesheet" href="/public/css/syntax.css">
+  <link rel="stylesheet" href="/public/css/hyde.css">
+  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface">
+
+  <!-- Icons -->
+  <link rel="shortcut icon" href="/public/favicon.png">
+
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml">
+</head>
+
+
+  <body>
+
+    <div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1>Beerlington</h1>
+      <p class="lead">The Blog</p>
+    </div>
+
+    <ul class="sidebar-nav">
+      <li class="sidebar-nav-item">
+        <a href="/">Home</a>
+      </li>
+
+      
+
+      
+      
+        
+          
+        
+      
+        
+          
+            <li class="sidebar-nav-item">
+              <a href="/about.html">About Me</a>
+            </li>
+          
+        
+      
+        
+      
+        
+          
+        
+      
+        
+          
+        
+      
+        
+          
+        
+      
+
+      <li class="sidebar-nav-item"><a href="/blog/archives/">Archives</a></li>
+      <li class="sidebar-nav-item"><a href="https://github.com/beerlington">GitHub</a></li>
+      <li class="sidebar-nav-item"><a href="https://twitter.com/beerlington">Twitter</a></li>
+    </ul>
+
+    <p>&copy; 2014. All rights reserved.</p>
+  </div>
+</div>
+
+
+    <div class="content container">
+      <div class="post">
+  <h1 class="post-title">Creating a Custom Rspec Generator</h1>
+  <span class="post-date">23 Jun 2013</span>
+  <p>I&#39;m a huge proponent of test driven development and have been feeling
+sort of guilty about a gem that I wrote which does not encourage
+testing whatsoever. The gem, <a href="https://github.com/beerlington/classy_enum">ClassyEnum</a>,
+provides class-based enumerator functionality on top of Active Record. This blog post is not so much
+about the gem itself, so If you&#39;re interested in reading more about it,
+the <a href="http://beerlington.com/classy_enum/">README</a> has some good examples.</p>
+
+<p>Historically, ClassyEnum has had a built-in generator to
+quickly create classes that represent enum members. While this has served me
+well, it has never generated any spec files along with these classes.
+I always end up either creating them manually, or just forgoing tests
+altogether. Neither option was great, so I wanted to see what it would
+take to create spec files automatically, similar to how Rails can
+generate model specs when using the model or scaffold generators.</p>
+
+<p>When ClassyEnum is installed in your Rails project, you can run the generator like so:</p>
+<div class="highlight"><pre><code class="irb language-irb" data-lang="irb"><span class="go">$ rails g classy_enum Priority low medium high</span>
+<span class="go">      create  app/enums</span>
+<span class="go">      create  app/enums/priority.rb</span>
+</code></pre></div>
+<p>Which produces the following file:</p>
+
+<p><em>app/enums/priority.rb</em></p>
+<div class="highlight"><pre><code class="ruby language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">Priority</span> <span class="o">&lt;</span> <span class="no">ClassyEnum</span><span class="o">::</span><span class="no">Base</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Priority</span><span class="o">::</span><span class="no">Low</span> <span class="o">&lt;</span> <span class="no">Priority</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Priority</span><span class="o">::</span><span class="no">Medium</span> <span class="o">&lt;</span> <span class="no">Priority</span>
+<span class="k">end</span>
+
+<span class="k">class</span> <span class="nc">Priority</span><span class="o">::</span><span class="no">High</span> <span class="o">&lt;</span> <span class="no">Priority</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>Each Priority subclass represents an enum member, and behaves like a
+true Ruby class. This boilerplate code starts out innocent enough,
+as most code does, but over time, I find myself adding logic
+and properties to these classes. Depending on how lazy I am,
+sometimes I test it, sometimes I don&#39;t.</p>
+
+<h2>Exploring the Un<em>spec</em>tacular Generator</h2>
+
+<p>The code for the &quot;main&quot; generator in ClassyEnum is fairly straightforward. It
+has a description, takes a few arguments, and copies a dynamically generated
+file into app/enums, creating the directory if it does not exist.</p>
+
+<p><em>lib/generators/classy<em>enum/classy</em>enum_generator.rb</em></p>
+<div class="highlight"><pre><code class="ruby language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">ClassyEnumGenerator</span> <span class="o">&lt;</span> <span class="no">Rails</span><span class="o">::</span><span class="no">Generators</span><span class="o">::</span><span class="no">NamedBase</span>
+  <span class="n">desc</span> <span class="s2">&quot;Generate a ClassyEnum definition in app/enums/&quot;</span>
+
+  <span class="n">argument</span> <span class="ss">:name</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="ss">:string</span><span class="p">,</span> <span class="ss">:required</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span> <span class="ss">:banner</span> <span class="o">=&gt;</span> <span class="s1">&#39;EnumName&#39;</span>
+  <span class="n">argument</span> <span class="ss">:values</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="ss">:array</span><span class="p">,</span> <span class="ss">:default</span> <span class="o">=&gt;</span> <span class="o">[]</span><span class="p">,</span> <span class="ss">:banner</span> <span class="o">=&gt;</span> <span class="s1">&#39;value1 value2 value3 etc...&#39;</span>
+
+  <span class="n">source_root</span> <span class="no">File</span><span class="o">.</span><span class="n">expand_path</span><span class="p">(</span><span class="s2">&quot;../templates&quot;</span><span class="p">,</span> <span class="bp">__FILE__</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">copy_files</span> <span class="c1"># :nodoc:</span>
+    <span class="n">empty_directory</span> <span class="s1">&#39;app/enums&#39;</span>
+    <span class="n">template</span> <span class="s2">&quot;enum.rb&quot;</span><span class="p">,</span> <span class="s2">&quot;app/enums/</span><span class="si">#{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">.rb&quot;</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>I would recommend the <a href="http://guides.rubyonrails.org/generators.html">Rails Generator Guide</a>
+if you aren&#39;t familiar with the syntax. You may also want to read the
+<a href="http://rdoc.info/github/wycats/thor/master/Thor/Actions.html">Thor documentation</a>
+which is the foundation for the Rails generator DSL.</p>
+
+<h2>Making the Generator <em>Spec</em>tacular</h2>
+
+<p>I had four main requirements for my generator&#39;s new behavior:</p>
+
+<ol>
+<li>It must automatically create specs in spec/enums when the generator
+is run.</li>
+<li>The specs it creates must work out of the box (even if they are
+pending).</li>
+<li>It cannot break existing behavior.</li>
+<li>It must be future proof by not relying on or hacking internal Rails or Rspec code</li>
+</ol>
+
+<p>After digging around on Stack Overflow and reading the Rails Guide,
+I discovered that Rails exposes a <a href="http://api.rubyonrails.org/classes/Rails/Generators/Base.html#method-c-hook_for"><code>hook_for</code></a>
+method. When passed the <code>:test_framework</code> argument,
+the main generator can automatically figure out which test framework your application is
+using, and based on naming conventions, which spec generator to load.
+All I had to do was add the hook to my existing generator, and create
+some support files to go along with it.</p>
+
+<p><em>lib/generators/rspec/classy<em>enum</em>generator.rb</em></p>
+<div class="highlight"><pre><code class="ruby language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">ClassyEnumGenerator</span> <span class="o">&lt;</span> <span class="no">Rails</span><span class="o">::</span><span class="no">Generators</span><span class="o">::</span><span class="no">NamedBase</span>
+  <span class="n">desc</span> <span class="s2">&quot;Generate a ClassyEnum definition in app/enums/&quot;</span>
+
+  <span class="n">argument</span> <span class="ss">:name</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="ss">:string</span><span class="p">,</span> <span class="ss">:required</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span> <span class="ss">:banner</span> <span class="o">=&gt;</span> <span class="s1">&#39;EnumName&#39;</span>
+  <span class="n">argument</span> <span class="ss">:values</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="ss">:array</span><span class="p">,</span> <span class="ss">:default</span> <span class="o">=&gt;</span> <span class="o">[]</span><span class="p">,</span> <span class="ss">:banner</span> <span class="o">=&gt;</span> <span class="s1">&#39;value1 value2 value3 etc...&#39;</span>
+
+  <span class="n">source_root</span> <span class="no">File</span><span class="o">.</span><span class="n">expand_path</span><span class="p">(</span><span class="s2">&quot;../templates&quot;</span><span class="p">,</span> <span class="bp">__FILE__</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">copy_files</span> <span class="c1"># :nodoc:</span>
+    <span class="n">empty_directory</span> <span class="s1">&#39;app/enums&#39;</span>
+    <span class="n">template</span> <span class="s2">&quot;enum.rb&quot;</span><span class="p">,</span> <span class="s2">&quot;app/enums/</span><span class="si">#{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">.rb&quot;</span>
+  <span class="k">end</span>
+
+  <span class="n">hook_for</span> <span class="ss">:test_framework</span> <span class="c1"># &lt;======= Add the hook here</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>More information about this hook can be found in the
+<a href="http://guides.rubyonrails.org/generators.html#customizing-your-workflow">&quot;Customizing Your Workflow&quot;</a>
+section of the Rails Guide.</p>
+
+<p>After adding just the hook, I knew it wasn&#39;t going to work, but because I like
+taking baby steps when coding, I rebuilt and
+installed the gem, updated my project&#39;s ClassyEnum dependency,
+and ran the generator anyway:</p>
+<div class="highlight"><pre><code class="irb language-irb" data-lang="irb"><span class="go">rails g classy_enum Priority low medium high</span>
+<span class="go">      create  app/enums</span>
+<span class="go">      create  app/enums/priority.rb</span>
+<span class="go">       error  rspec [not found]</span>
+</code></pre></div>
+<p>This error is just saying that the test_framework generator could
+not be found, which was expected because I had not created it yet.
+Since I don&#39;t have any tests for the generator itself, I used this message
+as a failing test, and my passing test would be when the enum spec was generated.</p>
+
+<p>According to the Rails Guide, the <code>hook_for</code> method will search in a
+few places for the generator, looking for one of a few different
+class names. By default it looks for a class named after the generator that
+invoked the hook, namespaced with the test framework&#39;s class name and &quot;Generators&quot;.
+In my case this would be <code>Rspec::Generators::ClassyEnumGenerator</code>.
+I could have alternatively used the <code>:as =&gt;</code> option to specify
+a different class name, but I wanted to use the default.</p>
+
+<p>I needed the behavior of the enum spec generator to basically mimic that
+of my enum class generator, the only difference being the spec location
+and which template was used. My final Rspec generator class is shown
+here:</p>
+
+<p><em>lib/generators/rspec/classy<em>enum</em>generator.rb</em></p>
+<div class="highlight"><pre><code class="ruby language-ruby" data-lang="ruby"><span class="k">module</span> <span class="nn">Rspec</span>
+  <span class="k">module</span> <span class="nn">Generators</span>
+    <span class="k">class</span> <span class="nc">ClassyEnumGenerator</span> <span class="o">&lt;</span> <span class="no">Rails</span><span class="o">::</span><span class="no">Generators</span><span class="o">::</span><span class="no">NamedBase</span>
+      <span class="n">desc</span> <span class="s2">&quot;Generate a ClassyEnum spec in spec/enums/&quot;</span>
+
+      <span class="n">argument</span> <span class="ss">:name</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="ss">:string</span><span class="p">,</span> <span class="ss">:required</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span> <span class="ss">:banner</span> <span class="o">=&gt;</span> <span class="s1">&#39;EnumName&#39;</span>
+      <span class="n">argument</span> <span class="ss">:values</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="ss">:array</span><span class="p">,</span> <span class="ss">:default</span> <span class="o">=&gt;</span> <span class="o">[]</span><span class="p">,</span> <span class="ss">:banner</span> <span class="o">=&gt;</span> <span class="s1">&#39;value1 value2 value3 etc...&#39;</span>
+
+      <span class="n">source_root</span> <span class="no">File</span><span class="o">.</span><span class="n">expand_path</span><span class="p">(</span><span class="s2">&quot;../templates&quot;</span><span class="p">,</span> <span class="bp">__FILE__</span><span class="p">)</span>
+
+      <span class="k">def</span> <span class="nf">copy_files</span> <span class="c1"># :nodoc:</span>
+        <span class="n">empty_directory</span> <span class="s1">&#39;spec/enums&#39;</span>
+        <span class="n">template</span> <span class="s2">&quot;enum_spec.rb&quot;</span><span class="p">,</span> <span class="s2">&quot;spec/enums/</span><span class="si">#{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">_spec.rb&quot;</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>And the spec template file:</p>
+
+<p><em>lib/generators/rspec/templates/enum_spec.rb</em></p>
+<div class="highlight"><pre><code class="erb language-erb" data-lang="erb"><span class="x">require &#39;spec_helper&#39;</span>
+<span class="cp">&lt;%</span> <span class="n">values</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">arg</span><span class="o">|</span> <span class="cp">%&gt;</span><span class="x"></span>
+<span class="x">describe </span><span class="cp">&lt;%=</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">::</span><span class="si">#{</span><span class="n">arg</span><span class="o">.</span><span class="n">camelize</span><span class="si">}</span><span class="s2">&quot;</span> <span class="cp">%&gt;</span><span class="x"> do</span>
+<span class="x">  pending &quot;add some examples to (or delete) #{__FILE__}&quot;</span>
+<span class="x">end</span>
+<span class="cp">&lt;%-</span> <span class="k">end</span> <span class="cp">-%&gt;</span><span class="x"></span>
+</code></pre></div>
+<p>After adding these two files to ClassyEnum, I reinstalled and
+reran the generator in my project and everything worked!</p>
+
+<p>Here is my &quot;passing&quot; test:</p>
+<div class="highlight"><pre><code class="irb language-irb" data-lang="irb"><span class="go">rails g classy_enum Priority low medium high</span>
+<span class="go">      create  app/enums</span>
+<span class="go">      create  app/enums/priority.rb</span>
+<span class="go">      invoke  rspec</span>
+<span class="go">      create    spec/enums</span>
+<span class="go">      create    spec/enums/priority_spec.rb</span>
+</code></pre></div>
+<p>Which generates the following spec file:</p>
+
+<p><em>spec/enums/priority_spec.rb</em></p>
+<div class="highlight"><pre><code class="ruby language-ruby" data-lang="ruby"><span class="nb">require</span> <span class="s1">&#39;spec_helper&#39;</span>
+
+<span class="n">describe</span> <span class="no">Priority</span><span class="o">::</span><span class="no">Low</span> <span class="k">do</span>
+  <span class="n">pending</span> <span class="s2">&quot;add some examples to (or delete) </span><span class="si">#{</span><span class="bp">__FILE__</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="k">end</span>
+
+<span class="n">describe</span> <span class="no">Priority</span><span class="o">::</span><span class="no">Medium</span> <span class="k">do</span>
+  <span class="n">pending</span> <span class="s2">&quot;add some examples to (or delete) </span><span class="si">#{</span><span class="bp">__FILE__</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="k">end</span>
+
+<span class="n">describe</span> <span class="no">Priority</span><span class="o">::</span><span class="no">High</span> <span class="k">do</span>
+  <span class="n">pending</span> <span class="s2">&quot;add some examples to (or delete) </span><span class="si">#{</span><span class="bp">__FILE__</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="k">end</span>
+</code></pre></div>
+<p>Since I am using the hook_for method, it includes some other behavior,
+such as supporting the <code>--skip-test-framework</code> flag out of the box. This
+would allow someone to generate the enum classes without any specs, but
+I don&#39;t recommend doing that. :)</p>
+
+<h2>Wrapping Up</h2>
+
+<p>I&#39;m happy with ClassyEnum generator once again. It creates spec files by
+default which makes me feel like I&#39;m able to practice what I preach. I
+was able to achieve all four of my goals without any crazy hacks or making
+any sacrifices. I was also able to easily add support for TestUnit by
+adding an additional generator and template file.</p>
+
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+      /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+      var disqus_shortname = 'beerlingtontheblog'; // required: replace example with your forum shortname
+
+      /* * * DON'T EDIT BELOW THIS LINE * * */
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+      <li>
+        <h3>
+          <a href="/blog/2013/12/31/my-year-in-review/">
+            My Year in Review
+            <small>31 Dec 2013</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/blog/2013/08/18/the-bill-and-ted-experience-in-software-development/">
+            Have You Ever Had a Bill and Ted Coding Experience?
+            <small>18 Aug 2013</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
+          <a href="/blog/2013/08/15/a-reflection-on-organizing-the-burlington-ruby-conference/">
+            A Reflection on Organizing the Burlington Ruby Conference
+            <small>15 Aug 2013</small>
+          </a>
+        </h3>
+      </li>
+    
+  </ul>
+</div>
+
+    </div>
+
+  </body>
+</html>
