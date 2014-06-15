@@ -4,7 +4,7 @@
  <title>Beerlington</title>
  <link href="http://beerlington.com//atom.xml" rel="self"/>
  <link href="http://beerlington.com//"/>
- <updated>2014-06-15T16:06:47-04:00</updated>
+ <updated>2014-06-15T16:16:24-04:00</updated>
  <id>http://beerlington.com/</id>
  <author>
    <name>Peter Brown</name>
@@ -44,7 +44,7 @@
 &lt;ol&gt;
   &lt;li&gt;How often do you &lt;a href=&quot;http://en.wikipedia.org/wiki/Create,_read,_update_and_delete&quot;&gt;CRUD&lt;/a&gt; records in the lookup table?&lt;/li&gt;
   &lt;li&gt;How much of your application logic depends on the state of that table?&lt;/li&gt;
-  &lt;li&gt;If you removed this table, would your application still run?&lt;/li&gt;
+  &lt;li&gt;If you removed the data in this table, would your application still run?&lt;/li&gt;
   &lt;li&gt;How many records are in this table?&lt;/li&gt;
   &lt;li&gt;Is it hairballs or hair balls?&lt;/li&gt;
 &lt;/ol&gt;
@@ -65,7 +65,7 @@
 
 &lt;p&gt;At a time when my favorite gems were getting more and more bloated (&lt;a href=&quot;https://github.com/thoughtbot/factory_girl/blob/master/GETTING_STARTED.md&quot;&gt;ahem&lt;/a&gt;), I wanted to simplify. I cut out features such as built-in Formtastic support, and reduced the DSL to a single model declaration. I even declined pull requests adding new features I didn’t want, despite the hard work that people put into their code. Telling someone why their idea sucks in a courteous way is not always easy.&lt;/p&gt;
 
-&lt;p&gt;I made the mistake of releasing 2.0 too soon and was not happy with the results. I ended up cutting even more out and releasing 3.0 three months later. I take &lt;a href=&quot;http://semver.org/&quot;&gt;semantic versioning&lt;/a&gt; seriously, but was not experienced enough to know when I was satisfied with the results.&lt;/p&gt;
+&lt;p&gt;I made the mistake of releasing 2.0 too soon and was not happy with the results. I ended up cutting even more out and releasing 3.0 three months later. I take &lt;a href=&quot;http://semver.org/&quot;&gt;semantic versioning&lt;/a&gt; seriously, and was not experienced enough to know when I was satisfied with the functionality.&lt;/p&gt;
 
 &lt;h2 id=&quot;the-latter-days&quot;&gt;The Latter Days&lt;/h2&gt;
 

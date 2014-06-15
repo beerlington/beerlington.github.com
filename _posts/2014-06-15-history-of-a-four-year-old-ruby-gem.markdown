@@ -32,7 +32,7 @@ Here's a quick survey about your application and database architecture to figure
 
 1. How often do you [CRUD](http://en.wikipedia.org/wiki/Create,_read,_update_and_delete) records in the lookup table?
 2. How much of your application logic depends on the state of that table?
-3. If you removed this table, would your application still run?
+3. If you removed the data in this table, would your application still run?
 4. How many records are in this table?
 5. Is it hairballs or hair balls?
 
@@ -52,7 +52,7 @@ With my new found skills, I decided to rewrite ClassyEnum from the ground up and
 
 At a time when my favorite gems were getting more and more bloated ([ahem](https://github.com/thoughtbot/factory_girl/blob/master/GETTING_STARTED.md)), I wanted to simplify. I cut out features such as built-in Formtastic support, and reduced the DSL to a single model declaration. I even declined pull requests adding new features I didn't want, despite the hard work that people put into their code. Telling someone why their idea sucks in a courteous way is not always easy.
 
-I made the mistake of releasing 2.0 too soon and was not happy with the results. I ended up cutting even more out and releasing 3.0 three months later. I take [semantic versioning](http://semver.org/) seriously, but was not experienced enough to know when I was satisfied with the results.
+I made the mistake of releasing 2.0 too soon and was not happy with the results. I ended up cutting even more out and releasing 3.0 three months later. I take [semantic versioning](http://semver.org/) seriously, and was not experienced enough to know when I was satisfied with the functionality.
 
 ## The Latter Days
 
