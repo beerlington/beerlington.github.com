@@ -98,119 +98,136 @@
       <div class="post">
   <h1 class="post-title">A Simplified Query Interface for Relationships in Active Record 4</h1>
   <span class="post-date">10 Mar 2013</span>
-  <div class="highlight"><pre><code class="ruby language-ruby" data-lang="ruby"><span class="c1"># Rails 4 now lets you simplify &quot;belongs_to&quot; association queries:</span>
+  <p>```ruby
+# Rails 4 now lets you simplify “belongs_to” association queries:</p>
 
-<span class="c1"># Before</span>
-<span class="no">Post</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">author_id</span><span class="p">:</span> <span class="vi">@author</span><span class="p">)</span>
-<span class="no">Image</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">imageable_id</span><span class="p">:</span> <span class="vi">@cat</span><span class="p">,</span> <span class="n">imageable_type</span><span class="p">:</span> <span class="s1">&#39;Cat&#39;</span><span class="p">)</span>
+<h1 id="before">Before</h1>
+<p>Post.where(author_id: @author)
+Image.where(imageable_id: @cat, imageable_type: ‘Cat’)</p>
 
-<span class="c1"># After</span>
-<span class="no">Post</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="ss">author</span><span class="p">:</span> <span class="vi">@author</span><span class="p">)</span>
-<span class="no">Image</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="ss">imageable</span><span class="p">:</span> <span class="vi">@cat</span><span class="p">)</span>
-</code></pre></div>
+<h1 id="after">After</h1>
+<p>Post.where(author: @author)
+Image.where(imageable: @cat)
+```</p>
+
 <p>About six months ago I added a <a href="https://github.com/rails/rails/pull/7273">new feature to Active Record</a>
 that allows you to write simpler queries across associated models. Compared to many of
 the other <a href="http://edgeguides.rubyonrails.org/4_0_release_notes.html">new features in Rails 4</a>,
-this isn&#39;t a significant change, however I think it&#39;s pretty
+this isn’t a significant change, however I think it’s pretty
 handy so I wanted to talk about it and show some examples. Other than a
 <a href="http://contributors.rubyonrails.org/contributors/pete-brown/commits">few small bug fixes</a>,
 this was my first real contribution to Rails, and the experience was enlightening
 (saving that for another post).</p>
 
-<h2>It&#39;s All About the Interface</h2>
+<h2 id="its-all-about-the-interface">It’s All About the Interface</h2>
 
 <p>Prior to this change, any queries that used a foreign key column were required
 to specify the actual column name as the hash key in the query. The biggest
-problem I had with this approach is that it wasn&#39;t consistent with other
-Active Record APIs. When I&#39;m working with models, I tend to be thinking in
+problem I had with this approach is that it wasn’t consistent with other
+Active Record APIs. When I’m working with models, I tend to be thinking in
 terms of relationships and objects as opposed to database columns.</p>
 
 <p>Take the following example from Rails 3.x where you can build new
 objects using the <code>belongs_to</code> relationship, but you cannot query with this
 relationship. When you are querying, you need to shift into an object + database
 hybrid mindset:</p>
-<div class="highlight"><pre><code class="ruby language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">Post</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
-  <span class="n">belongs_to</span> <span class="ss">:author</span>
-<span class="k">end</span>
 
-<span class="c1"># Creating related objects using the model association:</span>
-<span class="no">Post</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="ss">author</span><span class="p">:</span> <span class="no">Author</span><span class="o">.</span><span class="n">first</span><span class="p">)</span>
+<p>```ruby
+class Post &lt; ActiveRecord::Base
+  belongs_to :author
+end</p>
 
-<span class="c1"># Does NOT work in Rails 3.x</span>
-<span class="no">Post</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="ss">author</span><span class="p">:</span> <span class="no">Author</span><span class="o">.</span><span class="n">first</span><span class="p">)</span> <span class="c1"># =&gt; NOPE!</span>
+<h1 id="creating-related-objects-using-the-model-association">Creating related objects using the model association:</h1>
+<p>Post.new(author: Author.first)</p>
 
-<span class="c1"># Must specify foreign key to make query work in Rails 3.x</span>
-<span class="no">Post</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">author_id</span><span class="p">:</span> <span class="no">Author</span><span class="o">.</span><span class="n">first</span><span class="p">)</span> <span class="c1"># =&gt; Yup!</span>
-</code></pre></div>
+<h1 id="does-not-work-in-rails-3x">Does NOT work in Rails 3.x</h1>
+<p>Post.where(author: Author.first) # =&gt; NOPE!</p>
+
+<h1 id="must-specify-foreign-key-to-make-query-work-in-rails-3x">Must specify foreign key to make query work in Rails 3.x</h1>
+<p>Post.where(author_id: Author.first) # =&gt; Yup!
+```</p>
+
 <p>In the above example, I am specifying the foreign key on one side, and the object on the other.
 I think it can be hard to remember when you can use the associations and when
-you can&#39;t. Obviously a more practical approach would be to use <code>Author.first.posts</code>,
+you can’t. Obviously a more practical approach would be to use <code>Author.first.posts</code>,
 but this gives flexibility in cases where you might not have both sides of the
 relationship fully setup.</p>
 
-<p>The above example may seem trivial so here&#39;s an example using a
+<p>The above example may seem trivial so here’s an example using a
 non-conventional relationship:</p>
-<div class="highlight"><pre><code class="ruby language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">Post</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
-  <span class="n">belongs_to</span> <span class="ss">:writer</span><span class="p">,</span> <span class="n">class_name</span><span class="p">:</span> <span class="s1">&#39;Author&#39;</span><span class="p">,</span> <span class="n">foreign_key</span><span class="p">:</span> <span class="s1">&#39;author_id&#39;</span>
-<span class="k">end</span>
 
-<span class="c1"># Ah crap... I forgot what my foreign key was called!</span>
-<span class="no">Post</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">writer_id</span><span class="p">:</span> <span class="no">Author</span><span class="o">.</span><span class="n">first</span><span class="p">)</span> <span class="c1"># =&gt; NOPE!</span>
+<p>```ruby
+class Post &lt; ActiveRecord::Base
+  belongs_to :writer, class_name: ‘Author’, foreign_key: ‘author_id’
+end</p>
 
-<span class="c1"># Must still specify foreign key column here</span>
-<span class="no">Post</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">author_id</span><span class="p">:</span> <span class="no">Author</span><span class="o">.</span><span class="n">first</span><span class="p">)</span> <span class="c1"># =&gt; Yup!</span>
-</code></pre></div>
+<h1 id="ah-crap-i-forgot-what-my-foreign-key-was-called">Ah crap… I forgot what my foreign key was called!</h1>
+<p>Post.where(writer_id: Author.first) # =&gt; NOPE!</p>
+
+<h1 id="must-still-specify-foreign-key-column-here">Must still specify foreign key column here</h1>
+<p>Post.where(author_id: Author.first) # =&gt; Yup!
+```</p>
+
 <p>This issue becomes even more apparent when working with polymorphic relationships:</p>
-<div class="highlight"><pre><code class="ruby language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">Cat</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
-  <span class="n">has_many</span> <span class="ss">:images</span><span class="p">,</span> <span class="ss">as</span><span class="p">:</span> <span class="ss">:imageable</span><span class="p">,</span> <span class="ss">dependent</span><span class="p">:</span> <span class="ss">:destroy</span>
-<span class="k">end</span>
 
-<span class="k">class</span> <span class="nc">Image</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Base</span>
-  <span class="n">belongs_to</span> <span class="ss">:imageable</span><span class="p">,</span> <span class="ss">polymorphic</span><span class="p">:</span> <span class="kp">true</span>
-<span class="k">end</span>
+<p>```ruby
+class Cat &lt; ActiveRecord::Base
+  has_many :images, as: :imageable, dependent: :destroy
+end</p>
 
-<span class="no">Image</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">imageable_id</span><span class="p">:</span> <span class="no">Cat</span><span class="o">.</span><span class="n">first</span><span class="p">,</span> <span class="n">imageable_type</span><span class="p">:</span> <span class="s1">&#39;Cat&#39;</span><span class="p">)</span>
-</code></pre></div>
-<h2>Striving for Consistency</h2>
+<p>class Image &lt; ActiveRecord::Base
+  belongs_to :imageable, polymorphic: true
+end</p>
+
+<p>Image.where(imageable_id: Cat.first, imageable_type: ‘Cat’)
+```</p>
+
+<h2 id="striving-for-consistency">Striving for Consistency</h2>
 
 <p>After seeing a few <a href="https://github.com/rails/rails/issues/1736">different</a>
 <a href="https://github.com/rails/rails/issues/5067">issues</a> get opened, I realized
-I wasn&#39;t the only one who felt this inconsistency was unintuitive. It was
+I wasn’t the only one who felt this inconsistency was unintuitive. It was
 causing enough confusion that people were reporting it as a bug,
-convinced that it &quot;used to work&quot;.  This clearly wasn&#39;t a bug, and at some
+convinced that it “used to work”.  This clearly wasn’t a bug, and at some
 point an unintuitive interface needs to be addressed.</p>
 
-<p>I hadn&#39;t spend a ton of time in the Active Record internals so I decided
+<p>I hadn’t spend a ton of time in the Active Record internals so I decided
 to dive in and see if I could change the API so it worked with the relationship
 name. I knew that each Active Record model tracks its relationships with other
-models using &quot;reflections&quot;. Each reflection stores various properies such as the
-relationship name and macro (ie belongs<em>to, has</em>many, etc).</p>
-<div class="highlight"><pre><code class="irb language-irb" data-lang="irb"><span class="go">1.9.3-p327 :007 &gt; Author.reflections</span>
-<span class="go"> =&gt; {:posts=&gt;#&lt;ActiveRecord::Reflection::AssociationReflection:0x007f8cf391dc28 @macro=:has_many, @name=:posts, @options={:extend=&gt;[]}, @active_record=Author(id: integer, name: string, created_at: datetime, updated_at: datetime), @plural_name=&quot;posts&quot;, @collection=true&gt;}</span>
-<span class="go">1.9.3-p327 :008 &gt; Post.reflections</span>
-<span class="go"> =&gt; {:author=&gt;#&lt;ActiveRecord::Reflection::AssociationReflection:0x007f8cf4c1afb0 @macro=:belongs_to, @name=:author, @options={}, @active_record=Post(id: integer, body: text, author_id: integer, created_at: datetime, updated_at: datetime), @plural_name=&quot;authors&quot;, @collection=false&gt;}</span>
-</code></pre></div>
+models using “reflections”. Each reflection stores various properies such as the
+relationship name and macro (ie belongs_to, has_many, etc).</p>
+
+<p><code>irb
+1.9.3-p327 :007 &gt; Author.reflections
+ =&gt; {:posts=&gt;#&lt;ActiveRecord::Reflection::AssociationReflection:0x007f8cf391dc28 @macro=:has_many, @name=:posts, @options={:extend=&gt;[]}, @active_record=Author(id: integer, name: string, created_at: datetime, updated_at: datetime), @plural_name="posts", @collection=true&gt;}
+1.9.3-p327 :008 &gt; Post.reflections
+ =&gt; {:author=&gt;#&lt;ActiveRecord::Reflection::AssociationReflection:0x007f8cf4c1afb0 @macro=:belongs_to, @name=:author, @options={}, @active_record=Post(id: integer, body: text, author_id: integer, created_at: datetime, updated_at: datetime), @plural_name="authors", @collection=false&gt;}
+</code></p>
+
 <p>As I dove further into the Active Record internals, I found the
 <a href="https://github.com/rails/rails/blob/master/activerecord/lib/active_record/relation/predicate_builder.rb">ActiveRecord::PredicateBuilder</a>
-which is used for building the &quot;WHERE&quot; clause of every Active Record
-query. It was not the most straightforward class I&#39;ve worked with, but
+which is used for building the “WHERE” clause of every Active Record
+query. It was not the most straightforward class I’ve worked with, but
 the integration tests were good so I could do some exploratory testing
 and know when I had broken something. After a few days of discussing
 with the Rails core team about what behavior should be implemented, I
 had some <a href="https://github.com/rails/rails/commit/3da275c4396d7fad250d2b786027ba4f14344bd4">working code</a>.</p>
 
-<h2>Conclusion</h2>
+<h2 id="conclusion">Conclusion</h2>
 
 <p>In the end, the changes I made to the predicate builder allow you to query across a
 belong_to relationship without specifying the foreign key. Does it
-enable you to do something you couldn&#39;t do before? Not really, however, bringing
+enable you to do something you couldn’t do before? Not really, however, bringing
 more consistency to the API was my main goal.</p>
 
 <p>Now that <a href="http://weblog.rubyonrails.org/2013/2/25/Rails-4-0-beta1/">Rails 4 beta has been released</a>
 I encourage people to download it today and try out some simple examples:</p>
-<div class="highlight"><pre><code class="ruby language-ruby" data-lang="ruby"><span class="no">Post</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="ss">author</span><span class="p">:</span> <span class="vi">@author</span><span class="p">)</span>
-<span class="no">Image</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="ss">imageable</span><span class="p">:</span> <span class="vi">@cat</span><span class="p">)</span> <span class="c1"># =&gt; Polymorphic!</span>
-</code></pre></div>
+
+<p><code>ruby
+Post.where(author: @author)
+Image.where(imageable: @cat) # =&gt; Polymorphic!
+</code></p>
+
 <p>I also recommend checking out the <a href="https://github.com/rails/rails/blob/master/activerecord/test/cases/relation/where_test.rb#L26-L81">Active Record tests</a>
 for some more complex examples of how it can be used with polymorphic
 relationships and single-table inheritance.</p>
@@ -237,6 +254,15 @@ relationships and single-table inheritance.</p>
     
       <li>
         <h3>
+          <a href="/blog/2014/06/15/history-of-a-four-year-old-ruby-gem/">
+            The History of a Four-Year-Old Ruby Gem
+            <small>15 Jun 2014</small>
+          </a>
+        </h3>
+      </li>
+    
+      <li>
+        <h3>
           <a href="/blog/2013/12/31/my-year-in-review/">
             My Year in Review
             <small>31 Dec 2013</small>
@@ -249,15 +275,6 @@ relationships and single-table inheritance.</p>
           <a href="/blog/2013/08/18/the-bill-and-ted-experience-in-software-development/">
             Have You Ever Had a Bill and Ted Coding Experience?
             <small>18 Aug 2013</small>
-          </a>
-        </h3>
-      </li>
-    
-      <li>
-        <h3>
-          <a href="/blog/2013/08/15/a-reflection-on-organizing-the-burlington-ruby-conference/">
-            A Reflection on Organizing the Burlington Ruby Conference
-            <small>15 Aug 2013</small>
           </a>
         </h3>
       </li>

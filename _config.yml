@@ -1,6 +1,6 @@
 # Dependencies
-markdown: redcarpet
-pygments: true
+markdown: kramdown
+highlighter: rouge
 comments: true
 
 # Permalinks
@@ -10,7 +10,7 @@ permalink: /blog/:year/:month/:day/:title/
 title: Beerlington
 tagline: The Blog
 description: 'The Blog'
-url: http://hyde.getpoole.com
+url: http://beerlington.com/
 
 author:
   name: 'Peter Brown'

@@ -99,6 +99,80 @@
   
   <div class="post">
     <h1 class="post-title">
+      <a href="/blog/2014/06/15/history-of-a-four-year-old-ruby-gem/">
+        The History of a Four-Year-Old Ruby Gem
+      </a>
+    </h1>
+
+    <span class="post-date">15 Jun 2014</span>
+
+    <p>This is a story about learning, taking pride in your code, and tastefully sprinkling profanity into boring blog posts. It started out as an introduction to <a href="https://github.com/beerlington/classy_enum">ClassyEnum</a>, but I hate writing code examples, so this is what you get instead.</p>
+
+<h2 id="the-early-days">The Early Days</h2>
+
+<p>Four years ago I was working on a rewrite of a PHP application in Rails. I had no idea what I was doing. Subversion was still something startups used (I keep telling myself that).</p>
+
+<p>We were building software for monitoring commercial-scale solar power plants, and I was working on a feature related to detecting data anomalies like low power conditions and equipment failure. When an anomaly was detected, some sort of action would be taken. Each type of alarm could be individually configured with different settings for what action should occur when the alarm was triggered. Some alarms would just be logged to the database, others would send an email, and a few even required manual verification from a user.</p>
+
+<p>At the time, I was a total noob to application architecture and had been taught in school that redundancy in a relational database was a bad thing and that all data should be as normalized as possible. One of the techniques I learned was to use a “lookup” table in order to keep modifications limited to a single table. In theory this sounds like it’s a good idea because it allows you to make changes in one place and have it update everywhere. In practice, obsessing over database normalization is a giant turd of an idea that academics and DBAs preach because that’s what expensive textbooks say to do. <a href="http://en.wikipedia.org/wiki/Database_normalization#Normal_forms">Suck it normal forms.</a>.</p>
+
+<p>Here’s a simplified example of what our tables looked like:</p>
+
+<p><img src="/images/alarm-architecture.png" width="400" height="347" /></p>
+
+<p>We had the <strong>alarms</strong> table to define the various types of anomalies being monitoring for a particular project, and the <strong>alarm_actions</strong> table defining what to do when an alarm was activated. The <strong>alarm_actions</strong> table consisted of four or five records with a few combinations of the different settings.</p>
+
+<p>Quick digression - Here’s a self survey about your database architecture to figure out whether you really need a lookup table.</p>
+
+<ol>
+  <li>How often do you <a href="http://en.wikipedia.org/wiki/Create,_read,_update_and_delete">CRUD</a> records in the lookup table?</li>
+  <li>How much of your application logic depends on the state of that table?</li>
+  <li>If you removed this table, would your application still run?</li>
+  <li>How many records are in this table?</li>
+</ol>
+
+<p>If you answered “never” or “rarely” to the first two questions, “fuck no” to the third and “less than ten” to the fourth, you’ve got a great candidate for denormalizing that table and replacing with ClassyEnum (or a perhaps a <a href="https://github.com/beerlington/classy_enum/wiki/ClassyEnum-vs-other-gems">state machine</a>). I’d recommend checking out the <a href="https://github.com/beerlington/classy_enum#getting-started--example-usage">README</a> for an overview on how to get started with this.</p>
+
+<p>Anyway… we had hired a contractor at this time with real-world software development expertise who basically told us our design sucked. He brought up the concept of enums in Java and how they would be better than dealing with join tables and managing application logic. My first reaction was “no fucking way am I writing Java code in Ruby”. My second reaction was “why the fuck is a Java developer touching my Ruby code?”. But I’m a rational person so I finally listened to him. After all if it weren’t for Java we wouldn’t have the Eclipse IDE (trollface).</p>
+
+<p>He put together an initial proof of concept to show us how we could replace the lookup table with an enum class. He also showed us how you could delegate logic to the class (ala polymorphism) instead of having conditionals based on the value. This changed everything. I took his example, put it into a module, and got rid of the lookup table.</p>
+
+<p>For the sake of this being a complete history lesson, <a href="https://gist.github.com/beerlington/0a986548f66822779eb8">here’s a gist of my first iteration</a> which would later become ClassyEnum. I removed the application specific code so it’s not 100% complete, but you can tell how much I sucked at Ruby because the <code>ActiveEnumValue</code> class explicitly inherits from Object. In my defense, the contractor had it that way in his concept code. In his defense, he was a Java developer.</p>
+
+<p>After going through a few iterations in our application, <a href="http://rubygems.org/gems/classy_enum/versions/0.0.1">ClassyEnum 0.0.1</a> was released on September 21, 2010 (a Tuesday if you were wondering).</p>
+
+<p>I originally named it ActiveEnum, but when I extracted it to a gem, there was already a <a href="http://rubygems.org/gems/active_enum">gem with the same name</a>. Ironically that one never made it to version 1.0. Also ironically, there’s another gem called <a href="http://rubygems.org/gems/enum">enum</a> which was released exactly 11 days <em>before</em> ClassyEnum, based on the exact same Java enum concept. History lessons are fun.</p>
+
+<h2 id="the-mid-life-crisis">The Mid-life Crisis</h2>
+
+<p>Fast forward to the spring of 2012. Our application was in production and I was a much more seasoned Ruby developer than I had been two years prior. I knew that all classes inherit from Object and you don’t need to do this explicity. I was also much more knowledgable in the subject of object oriented programming in general. As controversial a subject as test driven development is these days in the Ruby community, I have to credit it with my understanding of OOP and specifically concepts like <a href="http://en.wikipedia.org/wiki/Encapsulation_(object-oriented_programming)">encapsulation</a> and <a href="http://en.wikipedia.org/wiki/Protocol_(object-oriented_programming)">designing interfaces</a>. I was also very interested in DSLs at the time and what makes one “better” than another.</p>
+
+<p>With my new found skills, I decided to rewrite ClassyEnum from the ground up and think about the experience from the perspective of someone who is using it for the first time. There were a few goals I had in mind: 1) It had to be simpler and more intuitive, 2) compatible with every major version of Rails, and 3) future proof to require less changes when new versions of Rails came out.</p>
+
+<p>At a time when my favorite gems were getting more and more bloated (<a href="https://github.com/thoughtbot/factory_girl/blob/master/GETTING_STARTED.md">ahem</a>), I wanted to simplify. I cut out features such as built-in Formtastic support, and reduced the DSL to a single model declaration. I even declined pull requests adding new features I didn’t want, despite the hard work that people put into their code. Telling someone why their idea sucks in a courteous way is not always easy.</p>
+
+<p>I made the mistake of releasing 2.0 too soon and was not happy with the results. I ended up cutting even more out and releasing 3.0 three months later. I take <a href="http://semver.org/">semantic versioning</a> seriously, but was not experienced enough to know when I was satisfied with the results.</p>
+
+<p>I really like this quote from the Semantic Versioning 2.0 FAQ:</p>
+
+<blockquote>
+  <p>Having to bump major versions to release incompatible changes means you’ll think through the impact of your changes, and evaluate the cost/benefit ratio involved.</p>
+</blockquote>
+
+<p>I now spend a lot more time letting releases “ferment” before making them final. This is why we have betas and release candidates.</p>
+
+<h2 id="the-latter-days">The Latter Days</h2>
+
+<p>Fast forward another two years to today. I’m no longer working on the monolithic application I started back in 2009. These days I am contracting and typically work on one or two different Rails applications a month. However, for the last year nearly every single application I have worked on has included ClassyEnum. According to <a href="https://rubygems.org/gems/classy_enum">rubygems.org</a> it has been installed over 80,000 times and had 45 releases. Yet despite the history and popularity, only 38 issues have been opened in four years (all but two are closed). The reason I mention this is because I take pride in releasing stable code that is well tested and documented. I want it to be easy for new comers to pick up, and I take every bug report seriously.</p>
+
+<p>I believe my strict policy of only adding features that have inherent value and cutting ones that do not has helped me sustain development on it. While new releases have slowed in recent years, its usage has only increased, and I see this as a sign of maturity and stability. I don’t want to add features just for the sake of adding them because the person who has to maintain them is me.</p>
+
+<p>I encourage you to think about a project you’re working on, whether it be open source or otherwise, and ask yourself how you can make the experience better for yourself and your fellow developers - today, next year, and well beyond its expected life.</p>
+
+  </div>
+  
+  <div class="post">
+    <h1 class="post-title">
       <a href="/blog/2013/12/31/my-year-in-review/">
         My Year in Review
       </a>
@@ -106,9 +180,9 @@
 
     <span class="post-date">31 Dec 2013</span>
 
-    <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+    <script async="" src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-<p>I&#39;ve seen a few great posts today from people reflecting on some of their
+<p>I’ve seen a few great posts today from people reflecting on some of their
 accomplishments and favorite things from 2013, so I was inspired to put
 something together myself. Instead of just listing things off, I thought
 it would be fun to go through <a href="https://twitter.com/beerlington">my Twitter feed</a>
@@ -116,88 +190,88 @@ and pull out some of my favorite tweets. Some of them were
 accomplishments, others were fun things I did, and some were just
 ridiculous things that popped into my head. Hope you enjoy!</p>
 
-<h2>On Quitting My Job</h2>
+<h2 id="on-quitting-my-job">On Quitting My Job</h2>
 
 <p>The end of 2012 was not a great time for me. Lots of things were going
-well in my life, but I knew I was not happy at my current job. I wasn&#39;t
+well in my life, but I knew I was not happy at my current job. I wasn’t
 learning anything, I was constantly frustrated, and to be honest, I was
 pretty depressed. I decided to quit my job and form a partnership with
 some of my coworkers doing contract web development through our <a href="http://agilion.com/">own company</a>.</p>
 
 <p>This was exactly the change that I needed. Working remotely has had a
-hugely positive impact on my life. It&#39;s given me freedom and
+hugely positive impact on my life. It’s given me freedom and
 flexibility, challenged me with new and exciting projects,
 and just made me an overall happier person. I live in VT for the quality
 of life, and now I feel like I am able to enjoy it more than ever.</p>
 
 <blockquote class="twitter-tweet" lang="en"><p>The best part about working from home is that you don&#39;t have to have any friends to be the most popular guy at the office.</p>&mdash; Peter Brown (@beerlington) <a href="https://twitter.com/beerlington/statuses/395874679744770048">October 31, 2013</a></blockquote>
 
-<h2>On Having a Sick Dog</h2>
+<h2 id="on-having-a-sick-dog">On Having a Sick Dog</h2>
 
 <p>The beginning of 2013 was an exciting time for me with the new job,
-however, my dog got really sick the week I started. We didn&#39;t know what
-was wrong with him for a few days. Then finally...</p>
+however, my dog got really sick the week I started. We didn’t know what
+was wrong with him for a few days. Then finally…</p>
 
 <blockquote class="twitter-tweet" lang="en"><p>Sick dog mystery solved! Apparently his digestive system was no match for a 4 inch pine cone. Hoping for a quick recovery :)</p>&mdash; Peter Brown (@beerlington) <a href="https://twitter.com/beerlington/statuses/292772738689560576">January 19, 2013</a></blockquote>
 
 <p>The poor guy had to spend the evening at the emergency vet recovering,
-making sure he didn&#39;t have any real damage from the pine cone. He
+making sure he didn’t have any real damage from the pine cone. He
 did make a swift recovery though, and was back on his feet in no time.</p>
 
 <blockquote class="twitter-tweet" lang="en"><p>Nothing beats a Saturday night at the emergency vet :( <a href="http://t.co/C5aJjsyJ">pic.twitter.com/C5aJjsyJ</a></p>&mdash; Peter Brown (@beerlington) <a href="https://twitter.com/beerlington/statuses/292857981207474176">January 20, 2013</a></blockquote>
 
-<h2>On Feeling Better</h2>
+<h2 id="on-feeling-better">On Feeling Better</h2>
 
 <p>Speaking of not feeling well, I gave up dairy in the fall of 2012.
-It wasn&#39;t something I wanted to do, but was something I needed to do. I had been feeling sick on and off for
+It wasn’t something I wanted to do, but was something I needed to do. I had been feeling sick on and off for
 a number of years, and finally decided enough was enough, and gave it up
 entirely. 2013 was the first full year on a dairy free diet and I can
-truly say I&#39;ve never felt this well in my entire life. I&#39;ve lost a ton of
-weight and am cold pretty much constantly, but it&#39;s a small price to
+truly say I’ve never felt this well in my entire life. I’ve lost a ton of
+weight and am cold pretty much constantly, but it’s a small price to
 pay to actually feel well.</p>
 
 <blockquote class="twitter-tweet" lang="en"><p>&quot;It&#39;s gonna be a good vacation because now you know you&#39;re allergic to dairy&quot; - wife</p>&mdash; Peter Brown (@beerlington) <a href="https://twitter.com/beerlington/statuses/302495058689683457">February 15, 2013</a></blockquote>
 
-<h2>On Holding Babies</h2>
+<h2 id="on-holding-babies">On Holding Babies</h2>
 
 <p>I feel like everywhere I look, someone is having a baby, and for whatever
 reason, people really like holding them. I had never held one before,
 so I wanted to see what all the fuss was about. No one told me what to
-do with it, and I figured you can&#39;t pet it like a cat, so I just tried
+do with it, and I figured you can’t pet it like a cat, so I just tried
 my hardest not to drop it.</p>
 
 <blockquote class="twitter-tweet" lang="en"><p>Held my first baby today, like a pro. I couldn&#39;t get him to stop squirming though. I think I&#39;ll stick with cats. <a href="http://t.co/S48Kit8NDY">pic.twitter.com/S48Kit8NDY</a></p>&mdash; Peter Brown (@beerlington) <a href="https://twitter.com/beerlington/statuses/307942043588653056">March 2, 2013</a></blockquote>
 
-<h2>On Being Sad (Panda)</h2>
+<h2 id="on-being-sad-panda">On Being Sad (Panda)</h2>
 
 <p>A friend/neighbor/former coworker of mine lost his dog in March.
-And by lost, I mean he died. I was sitting by Gordie&#39;s side during
-the final moments of his life, and it was one of the saddest things I&#39;ve
+And by lost, I mean he died. I was sitting by Gordie’s side during
+the final moments of his life, and it was one of the saddest things I’ve
 ever seen. This experience made me appreciate the things I have more
 than ever.</p>
 
 <blockquote class="twitter-tweet" lang="en"><p>Gonna miss you Gordie :( RIP <a href="http://t.co/m0rZ5p4Yyk">pic.twitter.com/m0rZ5p4Yyk</a></p>&mdash; Peter Brown (@beerlington) <a href="https://twitter.com/beerlington/statuses/315474527742197761">March 23, 2013</a></blockquote>
 
-<h2>On Taking Vacations</h2>
+<h2 id="on-taking-vacations">On Taking Vacations</h2>
 
 <p>My wife and I went on some fun vacations this year. Despite my immense
 fear of flying and rattlesnakes, my wife convinced me to fly out to Big
 Sur, CA where they apparently have rattlesnakes everywhere. It was like
-snakes on a plane, except the snakes weren&#39;t on the plane (that I knew
+snakes on a plane, except the snakes weren’t on the plane (that I knew
 of).</p>
 
 <blockquote class="twitter-tweet" lang="en"><p>OMFG a rattlesnake! <a href="http://t.co/XQnyknJu48">pic.twitter.com/XQnyknJu48</a></p>&mdash; Peter Brown (@beerlington) <a href="https://twitter.com/beerlington/statuses/324992311517925379">April 18, 2013</a></blockquote>
 
-<p>We also went to Bar Harbor, ME in the fall. We&#39;ve been going there every
+<p>We also went to Bar Harbor, ME in the fall. We’ve been going there every
 year since our honeymoon, and plan to go back again in 2014. My wife and
 I are both originally from Cape Cod, so I think what attracts us here is the
 combination of mountains and ocean. Acadia National park a beautiful place!</p>
 
 <blockquote class="twitter-tweet" lang="en"><p>Current status <a href="http://t.co/RMCY52VH61">pic.twitter.com/RMCY52VH61</a></p>&mdash; Peter Brown (@beerlington) <a href="https://twitter.com/beerlington/statuses/376451354866515968">September 7, 2013</a></blockquote>
 
-<h2>On Selling Drugs</h2>
+<h2 id="on-selling-drugs">On Selling Drugs</h2>
 
-<p>The series finale of Breaking Bad wouldn&#39;t be for another 4 months, but
+<p>The series finale of Breaking Bad wouldn’t be for another 4 months, but
 my neighbors were cooking up a storm of meth right down the street from
 me. I live in a quiet residential neighborhood just North of downtown
 Burlington, and never would have thought to see something like this.
@@ -206,41 +280,41 @@ Pretty fucked up shit.</p>
 
 <blockquote class="twitter-tweet" lang="en"><p>Holy shit I think they&#39;re busting a meth lab a few houses down from me <a href="https://twitter.com/search?q=%23btv&amp;src=hash">#btv</a> <a href="https://twitter.com/search?q=%23breakingbad&amp;src=hash">#breakingbad</a> <a href="http://t.co/5I1YEBZzCI">pic.twitter.com/5I1YEBZzCI</a></p>&mdash; Peter Brown (@beerlington) <a href="https://twitter.com/beerlington/statuses/335067219153281024">May 16, 2013</a></blockquote>
 
-<h2>On Receiving Tweet of the Week</h2>
+<h2 id="on-receiving-tweet-of-the-week">On Receiving Tweet of the Week</h2>
 
-<p>The optimist in me got &quot;tweet of the week&quot; in <a href="http://www.7dvt.com/">Seven Days</a>
-last summer. It wasn&#39;t my favorite tweet of the year, but I think it
-sums up the weather in VT pretty well. As I&#39;m typing this, we&#39;re looking
-at a low of -14&deg;F this week. I also thought up &quot;ForeverAloneSquare&quot;,
+<p>The optimist in me got “tweet of the week” in <a href="http://www.7dvt.com/">Seven Days</a>
+last summer. It wasn’t my favorite tweet of the year, but I think it
+sums up the weather in VT pretty well. As I’m typing this, we’re looking
+at a low of -14°F this week. I also thought up “ForeverAloneSquare”,
 which was my response to people who tweet FourSquare checkins. Please
-stop doing this folks. If I wanted to know where you were, I&#39;d use
+stop doing this folks. If I wanted to know where you were, I’d use
 FourSquare.</p>
 
 <blockquote class="twitter-tweet" lang="en"><p>I just unlocked the &quot;<a href="https://twitter.com/Seven_Days">@Seven_Days</a> tweet of the week&quot; badge on ForeverAloneSquare! <a href="http://t.co/MqBrM3YJfR">pic.twitter.com/MqBrM3YJfR</a></p>&mdash; Peter Brown (@beerlington) <a href="https://twitter.com/beerlington/statuses/342339674645356544">June 5, 2013</a></blockquote>
 
-<h2>On My Dog Turning 5</h2>
+<h2 id="on-my-dog-turning-5">On My Dog Turning 5</h2>
 
 <p>I love my dog. I mean the cats are great and all, but bonding with a dog has
 been one of the most rewarding experiences of my life. Sebastian turned
-5 this summer and I&#39;m hoping he makes it past my 40th birthday to see
-what I look like when I&#39;m fatter and balder.</p>
+5 this summer and I’m hoping he makes it past my 40th birthday to see
+what I look like when I’m fatter and balder.</p>
 
 <blockquote class="twitter-tweet" lang="en"><p>Happy 5th birthday Sebastian! =D <a href="http://t.co/YB39Me0toF">pic.twitter.com/YB39Me0toF</a></p>&mdash; Peter Brown (@beerlington) <a href="https://twitter.com/beerlington/statuses/361317421191139329">July 28, 2013</a></blockquote>
 
-<h2>On Making Friends</h2>
+<h2 id="on-making-friends">On Making Friends</h2>
 
 <p>I joke a lot about not having friends and being alone, but in reality I
-have a lot of really awesome people in my life. It wasn&#39;t a resolution
+have a lot of really awesome people in my life. It wasn’t a resolution
 of mine to make new friends or be more outgoing, but that was definitely
 one of the themes for me this year. The <a href="http://beerlington.com/blog/2013/08/15/a-reflection-on-organizing-the-burlington-ruby-conference/">conference I organized</a>
-was a huge part of that. I&#39;ve also been involved in organizing many of
+was a huge part of that. I’ve also been involved in organizing many of
 the local software user groups and have met people through those as
 well.  I am really looking forward to doing the conference in
-2014, and can&#39;t wait to share the experience with everyone again.</p>
+2014, and can’t wait to share the experience with everyone again.</p>
 
 <blockquote class="twitter-tweet" lang="en"><p><a href="https://twitter.com/search?q=%23rubyfriends&amp;src=hash">#rubyfriends</a> with <a href="https://twitter.com/buffym">@buffym</a>, <a href="https://twitter.com/brettchalupa">@brettchalupa</a> and <a href="https://twitter.com/Mo_Mack">@Mo_Mack</a> <a href="http://t.co/qG57HnP5cV">pic.twitter.com/qG57HnP5cV</a></p>&mdash; Peter Brown (@beerlington) <a href="https://twitter.com/beerlington/statuses/361210807943565312">July 27, 2013</a></blockquote>
 
-<h2>Laughter is the Best Medicine (besides Percocet)</h2>
+<h2 id="laughter-is-the-best-medicine-besides-percocet">Laughter is the Best Medicine (besides Percocet)</h2>
 
 <p>Life is too short to take seriously all the time. Here are a few of my
 favorite tweets that still make me chuckle.</p>
@@ -266,11 +340,11 @@ favorite tweets that still make me chuckle.</p>
 
     <span class="post-date">18 Aug 2013</span>
 
-    <p>Have you ever had an experience where you started to write some code only to discover that the code already existed? &quot;Woah&quot; you think to yourself as you fire off &quot;git blame&quot; to figure out which one of your coworkers deserves a full-force high five. Low and behold, your own name shows up as the author, and your mind is blown because you have no memory of writing it.</p>
+    <p>Have you ever had an experience where you started to write some code only to discover that the code already existed? “Woah” you think to yourself as you fire off “git blame” to figure out which one of your coworkers deserves a full-force high five. Low and behold, your own name shows up as the author, and your mind is blown because you have no memory of writing it.</p>
 
 <p>You, my friend, just had a Bill and Ted Experience.</p>
 
-<iframe width="560" height="315" src="//www.youtube.com/embed/_NjDHiLzpZc" frameborder="0" allowfullscreen></iframe>
+<iframe width="560" height="315" src="//www.youtube.com/embed/_NjDHiLzpZc" frameborder="0" allowfullscreen=""></iframe>
 
   </div>
   
@@ -283,71 +357,70 @@ favorite tweets that still make me chuckle.</p>
 
     <span class="post-date">15 Aug 2013</span>
 
-    <p><img src="/images/burlington-ruby-conference-banner-small.png" alt="Burlington Ruby Conference Banner"></p>
+    <p><img src="/images/burlington-ruby-conference-banner-small.png" alt="Burlington Ruby Conference Banner" /></p>
 
-<p>&quot;Why are you organizing a conference?&quot; - Someone asked me this question when we were just starting to plan for this year&#39;s Burlington Ruby Conference. I don&#39;t remember my exact response, but it was probably a long the lines of &quot;Uhhhh I don&#39;t know, it&#39;s just something I want to do&quot;. I remember thinking &quot;why wouldn&#39;t you want to do it?&quot;. I was really excited about it and it felt like one of those things I was supposed to do.</p>
+<p>“Why are you organizing a conference?” - Someone asked me this question when we were just starting to plan for this year’s Burlington Ruby Conference. I don’t remember my exact response, but it was probably a long the lines of “Uhhhh I don’t know, it’s just something I want to do”. I remember thinking “why wouldn’t you want to do it?”. I was really excited about it and it felt like one of those things I was supposed to do.</p>
 
-<p>It turns out that doing it well takes a lot of hard work. I&#39;m estimating that I spent over 200 hours on this year&#39;s event, not including the nights I dreamt about it. I&#39;m not sure where that stands compared to other web developers who moonlight as conference organizers, but I&#39;m guessing it&#39;s on the higher end of the spectrum. I can&#39;t picture many developers devoting that much time to something software-related that isn&#39;t coding. For me though, the payoff has been huge. While I haven&#39;t benefited financially, I&#39;ve learned a lot about planning and budgeting, made some awesome friends, and had what I would consider one of the best experiences of my life.</p>
+<p>It turns out that doing it well takes a lot of hard work. I’m estimating that I spent over 200 hours on this year’s event, not including the nights I dreamt about it. I’m not sure where that stands compared to other web developers who moonlight as conference organizers, but I’m guessing it’s on the higher end of the spectrum. I can’t picture many developers devoting that much time to something software-related that isn’t coding. For me though, the payoff has been huge. While I haven’t benefited financially, I’ve learned a lot about planning and budgeting, made some awesome friends, and had what I would consider one of the best experiences of my life.</p>
 
 <p>It has been almost two weeks since the conference ended, so I wanted to jot down a few of my thoughts on it before they faded.</p>
 
-<h2>Goals for this year</h2>
+<h2 id="goals-for-this-year">Goals for this year</h2>
 
-<p>This was the 2nd year for the Burlington Ruby Conference. I was not very involved last year, other than helping with a last minute scramble to try and find attendees. This year I wanted to be more involved. When we started planning back in January, we knew there were a few things that needed to change in order to make it an event we could continue to do. To understand what I mean, let&#39;s take a look at last year&#39;s conference by the numbers:</p>
+<p>This was the 2nd year for the Burlington Ruby Conference. I was not very involved last year, other than helping with a last minute scramble to try and find attendees. This year I wanted to be more involved. When we started planning back in January, we knew there were a few things that needed to change in order to make it an event we could continue to do. To understand what I mean, let’s take a look at last year’s conference by the numbers:</p>
 
 <p>Last year:</p>
 
 <ul>
-<li>Attendees: 75</li>
-<li>Speakers: 7</li>
-<li>Women: &lt; 10%</li>
-<li>Sponsors/supporters: 1</li>
-<li>Budget: $12K</li>
+  <li>Attendees: 75</li>
+  <li>Speakers: 7</li>
+  <li>Women: &lt; 10%</li>
+  <li>Sponsors/supporters: 1</li>
+  <li>Budget: $12K</li>
 </ul>
 
-<p>A conference with only 75 attendees and almost no sponsors is simply not sustainable. Including sponsors, our budget for last year&#39;s event was just over $12K. We did not plan on having a conference this small, but as most first-year organizers know all too well, things rarely go as planned. We had to cut back on a lot of things at the last minute, such as the venue size, and it was stressful for everyone involved. In order to make the conference sustainable, we knew we needed to increase our budget and attendance. We set a few goals for this year that we knew were ambitious, but would allow us to run the conference without having to forgo the things we felt were essential.</p>
+<p>A conference with only 75 attendees and almost no sponsors is simply not sustainable. Including sponsors, our budget for last year’s event was just over $12K. We did not plan on having a conference this small, but as most first-year organizers know all too well, things rarely go as planned. We had to cut back on a lot of things at the last minute, such as the venue size, and it was stressful for everyone involved. In order to make the conference sustainable, we knew we needed to increase our budget and attendance. We set a few goals for this year that we knew were ambitious, but would allow us to run the conference without having to forgo the things we felt were essential.</p>
 
 <p>Our Goals for this year:</p>
 
 <ul>
-<li>Attendees: 150</li>
-<li>Speakers: 10</li>
-<li>Increase female attendance + speakers</li>
-<li>Sponsors: MOAR</li>
-<li>Video recordings</li>
-<li>Keep ticket prices low</li>
-<li>Budget: $20K</li>
+  <li>Attendees: 150</li>
+  <li>Speakers: 10</li>
+  <li>Increase female attendance + speakers</li>
+  <li>Sponsors: MOAR</li>
+  <li>Video recordings</li>
+  <li>Keep ticket prices low</li>
+  <li>Budget: $20K</li>
 </ul>
 
 <p>We knew that increasing our attendance and budget by 2x was an ambitious goal. How were we going to get 150 people to come to Vermont for a software conference? How were we going to raise enough money to double our budget and be able to afford some of the nice to haves such as video recordings? How could we increase diversity?</p>
 
 <p>It took a lot of hard work and creativity to reach these goals, and here are a few of the things we did to achieve them.</p>
 
-<h2>MOAR Speakers</h2>
+<h2 id="moar-speakers">MOAR Speakers</h2>
 
-<p>Last year&#39;s conference did not have an official call for proposals. All of the speakers were personally invited. When we started thinking about getting speakers at this year&#39;s conference, we were sort of naive and wanted to avoid a formal CFP and just do invite-only again. We compiled a list of people that we wanted to speak at the conference and began reaching out to them. We had a couple &#39;Yes&#39;s, but most of them either said they were busy or just didn&#39;t reply. We were a little discouraged, so I <a href="https://twitter.com/btvrubyconf/status/306520777455460352">tweeted at @devchix</a> asking for help getting the word out. 15 minutes later, <a href="https://twitter.com/ashedryden">Ashe Dryden</a> replied saying that she wanted to help us make the process more friendly to diverse groups. Ashe had written a blog post on <a href="http://ashedryden.com/blog/increasing-diversity-at-your-conference">how to increase diversity at your conference</a> that I would consider the bible on this subject. She encouraged us to publish a <a href="http://burlingtonruby.com/diversity.html">diversity statement</a> and <a href="http://burlingtonruby.com/conduct.html">code of conduct</a>, organize a blind speaker selection process, as well as helped us organize a few Google hangouts to meet potential speakers.</p>
+<p>Last year’s conference did not have an official call for proposals. All of the speakers were personally invited. When we started thinking about getting speakers at this year’s conference, we were sort of naive and wanted to avoid a formal CFP and just do invite-only again. We compiled a list of people that we wanted to speak at the conference and began reaching out to them. We had a couple ‘Yes’s, but most of them either said they were busy or just didn’t reply. We were a little discouraged, so I <a href="https://twitter.com/btvrubyconf/status/306520777455460352">tweeted at @devchix</a> asking for help getting the word out. 15 minutes later, <a href="https://twitter.com/ashedryden">Ashe Dryden</a> replied saying that she wanted to help us make the process more friendly to diverse groups. Ashe had written a blog post on <a href="http://ashedryden.com/blog/increasing-diversity-at-your-conference">how to increase diversity at your conference</a> that I would consider the bible on this subject. She encouraged us to publish a <a href="http://burlingtonruby.com/diversity.html">diversity statement</a> and <a href="http://burlingtonruby.com/conduct.html">code of conduct</a>, organize a blind speaker selection process, as well as helped us organize a few Google hangouts to meet potential speakers.</p>
 
-<p>The Google hangouts proved to be invaluable for finding great speakers. Two of my favorite speakers this year both happened to be in those hangouts. They seemed very excited about the conference, and since they made it through the blind proposal selection and into the final round, we decided to pick both of them. We ended up with 52 submissions and increased the total number of speakers from 10 to 12, though it didn&#39;t make the selection process any easier. For those who submitted and were not selected, I spent a few hours sending personalized emails delivering the bad news. A few people replied asking how they could improve their proposals, but unfortunately with 52 submissions and only 9 slots, it was really not about quality. This was definitely one of the hardest parts of the entire experience for me.</p>
+<p>The Google hangouts proved to be invaluable for finding great speakers. Two of my favorite speakers this year both happened to be in those hangouts. They seemed very excited about the conference, and since they made it through the blind proposal selection and into the final round, we decided to pick both of them. We ended up with 52 submissions and increased the total number of speakers from 10 to 12, though it didn’t make the selection process any easier. For those who submitted and were not selected, I spent a few hours sending personalized emails delivering the bad news. A few people replied asking how they could improve their proposals, but unfortunately with 52 submissions and only 9 slots, it was really not about quality. This was definitely one of the hardest parts of the entire experience for me.</p>
 
-<h2>MOAR Sponsors</h2>
+<h2 id="moar-sponsors">MOAR Sponsors</h2>
 
-<p>&quot;Let&#39;s just get more sponsors&quot;. This was probably the most naive thought I had going into planning this year&#39;s conference. The thing about sponsors is that unless you have a direct connection or are an established event, it&#39;s pretty much impossible to find them. There are three reasons I can think of why someone would sponsor a conference. 1) They&#39;re hiring, 2) they&#39;re marketing a product, and/or 3) to support their community. As I mentioned in my <a href="/blog/2013/04/06/building-a-strong-foundation-for-vermonts-technology-future/">previous blog post</a>, we didn&#39;t have much traction from our local community in terms of financial support, but I thought it would be different if we reached out beyond our local community. Sadly this was not the case. If a company is selling a product or hiring, they want to know that their target audience will be in attendance. They need to know the conference is worth it for them. If they were basing their response on last year&#39;s conference, 75 attendees is not a lot of people to get in front of. After &quot;cold emailing&quot; a TON of companies and getting zero &#39;Yes&#39;s, it became apparent that we were wasting our time and would need to focus our attention on ticket sales. More on sponsorship in a bit...</p>
+<p>“Let’s just get more sponsors”. This was probably the most naive thought I had going into planning this year’s conference. The thing about sponsors is that unless you have a direct connection or are an established event, it’s pretty much impossible to find them. There are three reasons I can think of why someone would sponsor a conference. 1) They’re hiring, 2) they’re marketing a product, and/or 3) to support their community. As I mentioned in my <a href="/blog/2013/04/06/building-a-strong-foundation-for-vermonts-technology-future/">previous blog post</a>, we didn’t have much traction from our local community in terms of financial support, but I thought it would be different if we reached out beyond our local community. Sadly this was not the case. If a company is selling a product or hiring, they want to know that their target audience will be in attendance. They need to know the conference is worth it for them. If they were basing their response on last year’s conference, 75 attendees is not a lot of people to get in front of. After “cold emailing” a TON of companies and getting zero ‘Yes’s, it became apparent that we were wasting our time and would need to focus our attention on ticket sales. More on sponsorship in a bit…</p>
 
-<h2>MOAR Attendees</h2>
+<h2 id="moar-attendees">MOAR Attendees</h2>
 
-<p>Going from 75 to 150 attendees is kind of a big deal. After making the decision to grow, I started to wonder, &quot;is this too many people for our second year?&quot;. How do you even reach that many people? There are now close to <a href="http://lanyrd.com/topics/ruby/">20 Ruby conferences</a> in the U.S each year, and that number is still increasing. While having a high number of these regional conferences is great for the community, it puts a lot of pressure on the organizers to provide a unique experience. Why would someone fly across the country for a conference when they have one in their own region or state, or even their own city? </p>
+<p>Going from 75 to 150 attendees is kind of a big deal. After making the decision to grow, I started to wonder, “is this too many people for our second year?”. How do you even reach that many people? There are now close to <a href="http://lanyrd.com/topics/ruby/">20 Ruby conferences</a> in the U.S each year, and that number is still increasing. While having a high number of these regional conferences is great for the community, it puts a lot of pressure on the organizers to provide a unique experience. Why would someone fly across the country for a conference when they have one in their own region or state, or even their own city? </p>
 
-<p>We needed to give people a reason to want to come. One of the nice things about Vermont is that it&#39;s a beautiful state and people love to vacation here. We recognized that in order to bring people to the conference, we&#39;d need to focus on why <em>we</em> believed people should come. Our goal for Burlington Ruby is to build community and have fun. We see it as an excuse for people to come to Vermont for a weekend vacation, away from their normal, busy lives. Oh, and there just so happens to be a Ruby conference taking place.</p>
+<p>We needed to give people a reason to want to come. One of the nice things about Vermont is that it’s a beautiful state and people love to vacation here. We recognized that in order to bring people to the conference, we’d need to focus on why <em>we</em> believed people should come. Our goal for Burlington Ruby is to build community and have fun. We see it as an excuse for people to come to Vermont for a weekend vacation, away from their normal, busy lives. Oh, and there just so happens to be a Ruby conference taking place.</p>
 
-<p>I live in Vermont for its slower pace and quality of life. This laid back nature is evident in our schedule (long breaks) and the types of talks we had. We decided to focus our marketing on Vermont&#39;s beauty and not try and be something we weren&#39;t. We&#39;re a small conference focused on having a fun, relaxing weekend and making friends.</p>
+<p>I live in Vermont for its slower pace and quality of life. This laid back nature is evident in our schedule (long breaks) and the types of talks we had. We decided to focus our marketing on Vermont’s beauty and not try and be something we weren’t. We’re a small conference focused on having a fun, relaxing weekend and making friends.</p>
 
 <p>People seemed to take notice:</p>
 
 <blockquote class="twitter-tweet"><p>There is a reason to visit Burlington, VT, besides Heady Topper. <a href="http://t.co/urpdJVWqX7">http://t.co/urpdJVWqX7</a></p>&mdash; Hiro Asari (@hiro_asari) <a href="https://twitter.com/hiro_asari/statuses/311518675708555264">March 12, 2013</a></blockquote>
+<script async="" src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
-
-<h2>The history of the cat sponsors and Ruby toys</h2>
+<h2 id="the-history-of-the-cat-sponsors-and-ruby-toys">The history of the cat sponsors and Ruby toys</h2>
 
 <p>We also wanted to put on a conference that matched our personalities and felt like it belonged here in Burlington.</p>
 
@@ -355,58 +428,56 @@ favorite tweets that still make me chuckle.</p>
 
 <p>One month after the cats went live, and still no traction with sponsors, I was sitting there thinking about how great cats are, and decided we needed cat toys to go with the cat sponsors. I reached out to a local artist who had an <a href="http://www.etsy.com/shop/cattitudecattoy">Etsy store</a> and asked if she would be interested in making Ruby shaped catnip toys that we could sell at the conference. I felt like an idiot and thought she would think I was crazy, but she got back to me literally 5 minutes later and said she was interested in making them. She went ahead and made a trial run, and after a week we had the first official Ruby conference catnip toys.</p>
 
-<p><img src="/images/ruby-catnip-cat-toys.jpg" alt="Burlington Ruby Conference catnip cat toys"></p>
+<p><img src="/images/ruby-catnip-cat-toys.jpg" alt="Burlington Ruby Conference catnip cat toys" /></p>
 
-<p>We mailed out some of the toys to people who had helped us out so far, and figured it would be a good way to get the word out. Soon <a href="http://instagram.com/p/aj3FIsgASy/">pictures</a> and <a href="https://vine.co/v/bEe3MDpDvhQ">videos</a> started popping up on Twitter, and we were getting a lot more traffic to our website. We don&#39;t really have any way of knowing, but I&#39;m curious how many people came to the conference either directly or indirectly because of the cats.</p>
+<p>We mailed out some of the toys to people who had helped us out so far, and figured it would be a good way to get the word out. Soon <a href="http://instagram.com/p/aj3FIsgASy/">pictures</a> and <a href="https://vine.co/v/bEe3MDpDvhQ">videos</a> started popping up on Twitter, and we were getting a lot more traffic to our website. We don’t really have any way of knowing, but I’m curious how many people came to the conference either directly or indirectly because of the cats.</p>
 
-<h2>Dropping sponsorship prices</h2>
+<h2 id="dropping-sponsorship-prices">Dropping sponsorship prices</h2>
 
-<p>We sold nearly half the total tickets during our initial early bird ticket sale (aka &quot;Fresh Tracks&quot;). Then things slowed down to a crawl. The good news was that we had already sold more tickets than we did the previous year. The bad news was that we still had 75 to go in order to reach our goal. We knew that if we sold enough tickets, we would at least be able to afford to put on the event and not lose a ton of money. Since we didn&#39;t have any traction with sponsors, we decided to drop the sponsorship prices to the point where we were basically selling the tickets in bulk. For slightly more than the individual cost of a ticket, you got to be a sponsor. Not a bad deal. This definitely worked in our favor as we started to have a few sponsors actually reaching out to us.</p>
+<p>We sold nearly half the total tickets during our initial early bird ticket sale (aka “Fresh Tracks”). Then things slowed down to a crawl. The good news was that we had already sold more tickets than we did the previous year. The bad news was that we still had 75 to go in order to reach our goal. We knew that if we sold enough tickets, we would at least be able to afford to put on the event and not lose a ton of money. Since we didn’t have any traction with sponsors, we decided to drop the sponsorship prices to the point where we were basically selling the tickets in bulk. For slightly more than the individual cost of a ticket, you got to be a sponsor. Not a bad deal. This definitely worked in our favor as we started to have a few sponsors actually reaching out to us.</p>
 
-<h2>Ruby Workshop</h2>
+<h2 id="ruby-workshop">Ruby Workshop</h2>
 
 <p>We felt strongly that the Ruby workshop was important to have in conjunction with the conference. Burlington has a very small developer community, and last year we had very few Vermonters in attendance. As I mentioned ealier, we met with Maureen to plan out a Ruby training/workshop, and she took the idea and ran with it. The workshop happened one week before the conference and had around 25 participants. Other than maybe a free class, this was probably one of the best introductions to programming and Ruby that someone could get for under $100. Maureen put together the entire class, including connecting with the teacher <a href="https://twitter.com/alexch">Alex Chaffee</a> who did an AWESOME job teaching the workshop. If you ever have a chance to buy either of these folks a beer, please do so.</p>
 
-<p><img src="/images/gdi-ruby-workshop.jpg" alt="Girl Develop It Burlington Ruby workshop"></p>
+<p><img src="/images/gdi-ruby-workshop.jpg" alt="Girl Develop It Burlington Ruby workshop" /></p>
 
-<h2>Scholarships</h2>
+<h2 id="scholarships">Scholarships</h2>
 
-<p>The idea for offering scholarships came from <a href="https://twitter.com/cczona">Carina Zona</a> during one of the Google hangouts. It was something that we wanted to do, but didn&#39;t think we&#39;d be able to make happen. Later, I found out about a new program through Ruby Central called the <a href="http://rubycentral.org/community#scholarship">Opportunity Scholarship</a> that would match up to $1,500. As the months went by, we were still getting the occasional cat sponsor, and by July had raised over $1K. At this point, we had also sold enough tickets to cover the conference expenses, and were able to set aside tickets to give to scholars. We ended up giving away 11 scholarships, most of which went to women who attended the Girl Develop It workshop, and this was their first tech conference.</p>
+<p>The idea for offering scholarships came from <a href="https://twitter.com/cczona">Carina Zona</a> during one of the Google hangouts. It was something that we wanted to do, but didn’t think we’d be able to make happen. Later, I found out about a new program through Ruby Central called the <a href="http://rubycentral.org/community#scholarship">Opportunity Scholarship</a> that would match up to $1,500. As the months went by, we were still getting the occasional cat sponsor, and by July had raised over $1K. At this point, we had also sold enough tickets to cover the conference expenses, and were able to set aside tickets to give to scholars. We ended up giving away 11 scholarships, most of which went to women who attended the Girl Develop It workshop, and this was their first tech conference.</p>
 
 <blockquote class="twitter-tweet"><p>I must say, <a href="https://twitter.com/btvrubyconf">@btvrubyconf</a> has one of the higher number of women attendees of the confs I&#39;ve been to recently.</p>&mdash; Steve Klabnik (@steveklabnik) <a href="https://twitter.com/steveklabnik/statuses/363691528465559552">August 3, 2013</a></blockquote>
+<script async="" src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+<p>Side note: If you’re organizing a conference, I highly recommend taking advantage of the scholarship funds from Ruby Central. It’s a great way to increase diversity, get the word out about your conference, raise a little money, and most importantly, give people an opportunity to attend a conference who would not have been able to otherwise.</p>
 
-<p>Side note: If you&#39;re organizing a conference, I highly recommend taking advantage of the scholarship funds from Ruby Central. It&#39;s a great way to increase diversity, get the word out about your conference, raise a little money, and most importantly, give people an opportunity to attend a conference who would not have been able to otherwise.</p>
-
-<h2>Selling Out</h2>
+<h2 id="selling-out">Selling Out</h2>
 
 <p>During the last week before the conference, our headcount was 149 attendees. This included reselling a handful of tickets that we refunded earlier on. I wanted nothing more than to sell this last ticket to say that we had sold out. Sure, we could have just <em>said</em> that we had sold out, but that would have been lame. So finally it was friday night, 15 minutes before the kick off party started, and I got an email saying the last ticket had been sold.</p>
 
 <p>The guy who bought the last ticket became an instant celebrity:</p>
 
 <blockquote class="twitter-tweet"><p>Achievement unlocked. Met the person who bought last <a href="https://twitter.com/btvrubyconf">@btvrubyconf</a> ticket. <a href="http://t.co/Rc20jGH2bO">http://t.co/Rc20jGH2bO</a></p>&mdash; Michael Denomy (@mdenomy) <a href="https://twitter.com/mdenomy/statuses/363999840298356736">August 4, 2013</a></blockquote>
+<script async="" src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+<p>Since we’re planning on keeping next year’s attendance at 150 (including speakers), I’m hoping the fact that we sold out this year will create demand and make it easier to sell tickets next year.</p>
 
-<p>Since we&#39;re planning on keeping next year&#39;s attendance at 150 (including speakers), I&#39;m hoping the fact that we sold out this year will create demand and make it easier to sell tickets next year.</p>
-
-<h2>Mission Accomplished</h2>
+<h2 id="mission-accomplished">Mission Accomplished</h2>
 
 <p>In the end, we reached or exceeded every single one of our goals. We had 150 attendees, nearly doubled the number of speakers, increased female attendance to over 20%, had a considerable increase in sponsors, and were able to hire <a href="http://www.confreaks.com/events/btvruby2013">Confreaks</a> to come and film the talks.</p>
 
 <p>This year:</p>
 
 <ul>
-<li>Attendees: 150</li>
-<li>Speakers: 12</li>
-<li>Women: &gt; 20%</li>
-<li>Sponsors/supporters: 12</li>
-<li>Confreaks: [✓]</li>
-<li>Budget: $24K</li>
+  <li>Attendees: 150</li>
+  <li>Speakers: 12</li>
+  <li>Women: &gt; 20%</li>
+  <li>Sponsors/supporters: 12</li>
+  <li>Confreaks: [✓]</li>
+  <li>Budget: $24K</li>
 </ul>
 
-<p>This post discussed just a few of the things we did for this year&#39;s Burlington Ruby Conference that I felt were either unique to our event or contributed to our success. I don&#39;t think people will notice too many drastic changes next year as we&#39;ll likely focus on polishing things up and continuing to make it an exceptional experience for everyone. If you&#39;re interested in hearing more or have specific questions about conferences or cats, <a href="https://twitter.com/beerlington">please reach out</a>!</p>
+<p>This post discussed just a few of the things we did for this year’s Burlington Ruby Conference that I felt were either unique to our event or contributed to our success. I don’t think people will notice too many drastic changes next year as we’ll likely focus on polishing things up and continuing to make it an exceptional experience for everyone. If you’re interested in hearing more or have specific questions about conferences or cats, <a href="https://twitter.com/beerlington">please reach out</a>!</p>
 
 <p>Thank you so much to everyone who made the event happen, especially <a href="https://twitter.com/brettchalupa">Brett</a>, my supportive <a href="https://twitter.com/vermontgoldens">wife</a>, my mom who provided unlimited phone support, and my partners at <a href="http://agilion.com/">Agilion</a>. I am incredibly grateful to have had the experience and cannot wait to start organizing it again next year. See you at Burlington Ruby in 2014!</p>
 
@@ -421,11 +492,11 @@ favorite tweets that still make me chuckle.</p>
 
     <span class="post-date">23 Jun 2013</span>
 
-    <p>I&#39;m a huge proponent of test driven development and have been feeling
+    <p>I’m a huge proponent of test driven development and have been feeling
 sort of guilty about a gem that I wrote which does not encourage
 testing whatsoever. The gem, <a href="https://github.com/beerlington/classy_enum">ClassyEnum</a>,
 provides class-based enumerator functionality on top of Active Record. This blog post is not so much
-about the gem itself, so If you&#39;re interested in reading more about it,
+about the gem itself, so If you’re interested in reading more about it,
 the <a href="http://beerlington.com/classy_enum/">README</a> has some good examples.</p>
 
 <p>Historically, ClassyEnum has had a built-in generator to
@@ -437,68 +508,77 @@ take to create spec files automatically, similar to how Rails can
 generate model specs when using the model or scaffold generators.</p>
 
 <p>When ClassyEnum is installed in your Rails project, you can run the generator like so:</p>
-<div class="highlight"><pre><code class="irb language-irb" data-lang="irb"><span class="go">$ rails g classy_enum Priority low medium high</span>
-<span class="go">      create  app/enums</span>
-<span class="go">      create  app/enums/priority.rb</span>
-</code></pre></div>
+
+<p><code>irb
+$ rails g classy_enum Priority low medium high
+      create  app/enums
+      create  app/enums/priority.rb
+</code></p>
+
 <p>Which produces the following file:</p>
 
 <p><em>app/enums/priority.rb</em></p>
-<div class="highlight"><pre><code class="ruby language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">Priority</span> <span class="o">&lt;</span> <span class="no">ClassyEnum</span><span class="o">::</span><span class="no">Base</span>
-<span class="k">end</span>
 
-<span class="k">class</span> <span class="nc">Priority</span><span class="o">::</span><span class="no">Low</span> <span class="o">&lt;</span> <span class="no">Priority</span>
-<span class="k">end</span>
+<p>```ruby
+class Priority &lt; ClassyEnum::Base
+end</p>
 
-<span class="k">class</span> <span class="nc">Priority</span><span class="o">::</span><span class="no">Medium</span> <span class="o">&lt;</span> <span class="no">Priority</span>
-<span class="k">end</span>
+<p>class Priority::Low &lt; Priority
+end</p>
 
-<span class="k">class</span> <span class="nc">Priority</span><span class="o">::</span><span class="no">High</span> <span class="o">&lt;</span> <span class="no">Priority</span>
-<span class="k">end</span>
-</code></pre></div>
+<p>class Priority::Medium &lt; Priority
+end</p>
+
+<p>class Priority::High &lt; Priority
+end
+```</p>
+
 <p>Each Priority subclass represents an enum member, and behaves like a
 true Ruby class. This boilerplate code starts out innocent enough,
 as most code does, but over time, I find myself adding logic
 and properties to these classes. Depending on how lazy I am,
-sometimes I test it, sometimes I don&#39;t.</p>
+sometimes I test it, sometimes I don’t.</p>
 
-<h2>Exploring the Un<em>spec</em>tacular Generator</h2>
+<h2 id="exploring-the-unspectacular-generator">Exploring the Un<em>spec</em>tacular Generator</h2>
 
-<p>The code for the &quot;main&quot; generator in ClassyEnum is fairly straightforward. It
+<p>The code for the “main” generator in ClassyEnum is fairly straightforward. It
 has a description, takes a few arguments, and copies a dynamically generated
 file into app/enums, creating the directory if it does not exist.</p>
 
-<p><em>lib/generators/classy<em>enum/classy</em>enum_generator.rb</em></p>
-<div class="highlight"><pre><code class="ruby language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">ClassyEnumGenerator</span> <span class="o">&lt;</span> <span class="no">Rails</span><span class="o">::</span><span class="no">Generators</span><span class="o">::</span><span class="no">NamedBase</span>
-  <span class="n">desc</span> <span class="s2">&quot;Generate a ClassyEnum definition in app/enums/&quot;</span>
+<p><em>lib/generators/classy_enum/classy_enum_generator.rb</em></p>
 
-  <span class="n">argument</span> <span class="ss">:name</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="ss">:string</span><span class="p">,</span> <span class="ss">:required</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span> <span class="ss">:banner</span> <span class="o">=&gt;</span> <span class="s1">&#39;EnumName&#39;</span>
-  <span class="n">argument</span> <span class="ss">:values</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="ss">:array</span><span class="p">,</span> <span class="ss">:default</span> <span class="o">=&gt;</span> <span class="o">[]</span><span class="p">,</span> <span class="ss">:banner</span> <span class="o">=&gt;</span> <span class="s1">&#39;value1 value2 value3 etc...&#39;</span>
+<p>```ruby
+class ClassyEnumGenerator &lt; Rails::Generators::NamedBase
+  desc “Generate a ClassyEnum definition in app/enums/”</p>
 
-  <span class="n">source_root</span> <span class="no">File</span><span class="o">.</span><span class="n">expand_path</span><span class="p">(</span><span class="s2">&quot;../templates&quot;</span><span class="p">,</span> <span class="bp">__FILE__</span><span class="p">)</span>
+<p>argument :name, :type =&gt; :string, :required =&gt; true, :banner =&gt; ‘EnumName’
+  argument :values, :type =&gt; :array, :default =&gt; [], :banner =&gt; ‘value1 value2 value3 etc…’</p>
 
-  <span class="k">def</span> <span class="nf">copy_files</span> <span class="c1"># :nodoc:</span>
-    <span class="n">empty_directory</span> <span class="s1">&#39;app/enums&#39;</span>
-    <span class="n">template</span> <span class="s2">&quot;enum.rb&quot;</span><span class="p">,</span> <span class="s2">&quot;app/enums/</span><span class="si">#{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">.rb&quot;</span>
-  <span class="k">end</span>
-<span class="k">end</span>
-</code></pre></div>
+<p>source_root File.expand_path(“../templates”, <strong>FILE</strong>)</p>
+
+<p>def copy_files # :nodoc:
+    empty_directory ‘app/enums’
+    template “enum.rb”, “app/enums/#{file_name}.rb”
+  end
+end
+```</p>
+
 <p>I would recommend the <a href="http://guides.rubyonrails.org/generators.html">Rails Generator Guide</a>
-if you aren&#39;t familiar with the syntax. You may also want to read the
+if you aren’t familiar with the syntax. You may also want to read the
 <a href="http://rdoc.info/github/wycats/thor/master/Thor/Actions.html">Thor documentation</a>
 which is the foundation for the Rails generator DSL.</p>
 
-<h2>Making the Generator <em>Spec</em>tacular</h2>
+<h2 id="making-the-generator-spectacular">Making the Generator <em>Spec</em>tacular</h2>
 
-<p>I had four main requirements for my generator&#39;s new behavior:</p>
+<p>I had four main requirements for my generator’s new behavior:</p>
 
 <ol>
-<li>It must automatically create specs in spec/enums when the generator
+  <li>It must automatically create specs in spec/enums when the generator
 is run.</li>
-<li>The specs it creates must work out of the box (even if they are
+  <li>The specs it creates must work out of the box (even if they are
 pending).</li>
-<li>It cannot break existing behavior.</li>
-<li>It must be future proof by not relying on or hacking internal Rails or Rspec code</li>
+  <li>It cannot break existing behavior.</li>
+  <li>It must be future proof by not relying on or hacking internal Rails or Rspec code</li>
 </ol>
 
 <p>After digging around on Stack Overflow and reading the Rails Guide,
@@ -509,47 +589,53 @@ using, and based on naming conventions, which spec generator to load.
 All I had to do was add the hook to my existing generator, and create
 some support files to go along with it.</p>
 
-<p><em>lib/generators/rspec/classy<em>enum</em>generator.rb</em></p>
-<div class="highlight"><pre><code class="ruby language-ruby" data-lang="ruby"><span class="k">class</span> <span class="nc">ClassyEnumGenerator</span> <span class="o">&lt;</span> <span class="no">Rails</span><span class="o">::</span><span class="no">Generators</span><span class="o">::</span><span class="no">NamedBase</span>
-  <span class="n">desc</span> <span class="s2">&quot;Generate a ClassyEnum definition in app/enums/&quot;</span>
+<p><em>lib/generators/rspec/classy_enum_generator.rb</em></p>
 
-  <span class="n">argument</span> <span class="ss">:name</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="ss">:string</span><span class="p">,</span> <span class="ss">:required</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span> <span class="ss">:banner</span> <span class="o">=&gt;</span> <span class="s1">&#39;EnumName&#39;</span>
-  <span class="n">argument</span> <span class="ss">:values</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="ss">:array</span><span class="p">,</span> <span class="ss">:default</span> <span class="o">=&gt;</span> <span class="o">[]</span><span class="p">,</span> <span class="ss">:banner</span> <span class="o">=&gt;</span> <span class="s1">&#39;value1 value2 value3 etc...&#39;</span>
+<p>```ruby
+class ClassyEnumGenerator &lt; Rails::Generators::NamedBase
+  desc “Generate a ClassyEnum definition in app/enums/”</p>
 
-  <span class="n">source_root</span> <span class="no">File</span><span class="o">.</span><span class="n">expand_path</span><span class="p">(</span><span class="s2">&quot;../templates&quot;</span><span class="p">,</span> <span class="bp">__FILE__</span><span class="p">)</span>
+<p>argument :name, :type =&gt; :string, :required =&gt; true, :banner =&gt; ‘EnumName’
+  argument :values, :type =&gt; :array, :default =&gt; [], :banner =&gt; ‘value1 value2 value3 etc…’</p>
 
-  <span class="k">def</span> <span class="nf">copy_files</span> <span class="c1"># :nodoc:</span>
-    <span class="n">empty_directory</span> <span class="s1">&#39;app/enums&#39;</span>
-    <span class="n">template</span> <span class="s2">&quot;enum.rb&quot;</span><span class="p">,</span> <span class="s2">&quot;app/enums/</span><span class="si">#{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">.rb&quot;</span>
-  <span class="k">end</span>
+<p>source_root File.expand_path(“../templates”, <strong>FILE</strong>)</p>
 
-  <span class="n">hook_for</span> <span class="ss">:test_framework</span> <span class="c1"># &lt;======= Add the hook here</span>
-<span class="k">end</span>
-</code></pre></div>
+<p>def copy_files # :nodoc:
+    empty_directory ‘app/enums’
+    template “enum.rb”, “app/enums/#{file_name}.rb”
+  end</p>
+
+<p>hook_for :test_framework # &lt;======= Add the hook here
+end
+```</p>
+
 <p>More information about this hook can be found in the
-<a href="http://guides.rubyonrails.org/generators.html#customizing-your-workflow">&quot;Customizing Your Workflow&quot;</a>
+<a href="http://guides.rubyonrails.org/generators.html#customizing-your-workflow">“Customizing Your Workflow”</a>
 section of the Rails Guide.</p>
 
-<p>After adding just the hook, I knew it wasn&#39;t going to work, but because I like
+<p>After adding just the hook, I knew it wasn’t going to work, but because I like
 taking baby steps when coding, I rebuilt and
-installed the gem, updated my project&#39;s ClassyEnum dependency,
+installed the gem, updated my project’s ClassyEnum dependency,
 and ran the generator anyway:</p>
-<div class="highlight"><pre><code class="irb language-irb" data-lang="irb"><span class="go">rails g classy_enum Priority low medium high</span>
-<span class="go">      create  app/enums</span>
-<span class="go">      create  app/enums/priority.rb</span>
-<span class="go">       error  rspec [not found]</span>
-</code></pre></div>
+
+<p><code>irb
+rails g classy_enum Priority low medium high
+      create  app/enums
+      create  app/enums/priority.rb
+       error  rspec [not found]
+</code></p>
+
 <p>This error is just saying that the test_framework generator could
 not be found, which was expected because I had not created it yet.
-Since I don&#39;t have any tests for the generator itself, I used this message
+Since I don’t have any tests for the generator itself, I used this message
 as a failing test, and my passing test would be when the enum spec was generated.</p>
 
 <p>According to the Rails Guide, the <code>hook_for</code> method will search in a
 few places for the generator, looking for one of a few different
 class names. By default it looks for a class named after the generator that
-invoked the hook, namespaced with the test framework&#39;s class name and &quot;Generators&quot;.
+invoked the hook, namespaced with the test framework’s class name and “Generators”.
 In my case this would be <code>Rspec::Generators::ClassyEnumGenerator</code>.
-I could have alternatively used the <code>:as =&gt;</code> option to specify
+I could have alternatively used the <code>:as =&gt; </code> option to specify
 a different class name, but I wanted to use the default.</p>
 
 <p>I needed the behavior of the enum spec generator to basically mimic that
@@ -557,218 +643,86 @@ of my enum class generator, the only difference being the spec location
 and which template was used. My final Rspec generator class is shown
 here:</p>
 
-<p><em>lib/generators/rspec/classy<em>enum</em>generator.rb</em></p>
-<div class="highlight"><pre><code class="ruby language-ruby" data-lang="ruby"><span class="k">module</span> <span class="nn">Rspec</span>
-  <span class="k">module</span> <span class="nn">Generators</span>
-    <span class="k">class</span> <span class="nc">ClassyEnumGenerator</span> <span class="o">&lt;</span> <span class="no">Rails</span><span class="o">::</span><span class="no">Generators</span><span class="o">::</span><span class="no">NamedBase</span>
-      <span class="n">desc</span> <span class="s2">&quot;Generate a ClassyEnum spec in spec/enums/&quot;</span>
+<p><em>lib/generators/rspec/classy_enum_generator.rb</em></p>
 
-      <span class="n">argument</span> <span class="ss">:name</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="ss">:string</span><span class="p">,</span> <span class="ss">:required</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span> <span class="ss">:banner</span> <span class="o">=&gt;</span> <span class="s1">&#39;EnumName&#39;</span>
-      <span class="n">argument</span> <span class="ss">:values</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="ss">:array</span><span class="p">,</span> <span class="ss">:default</span> <span class="o">=&gt;</span> <span class="o">[]</span><span class="p">,</span> <span class="ss">:banner</span> <span class="o">=&gt;</span> <span class="s1">&#39;value1 value2 value3 etc...&#39;</span>
+<p>```ruby
+module Rspec
+  module Generators
+    class ClassyEnumGenerator &lt; Rails::Generators::NamedBase
+      desc “Generate a ClassyEnum spec in spec/enums/”</p>
 
-      <span class="n">source_root</span> <span class="no">File</span><span class="o">.</span><span class="n">expand_path</span><span class="p">(</span><span class="s2">&quot;../templates&quot;</span><span class="p">,</span> <span class="bp">__FILE__</span><span class="p">)</span>
+<pre><code>  argument :name, :type =&gt; :string, :required =&gt; true, :banner =&gt; 'EnumName'
+  argument :values, :type =&gt; :array, :default =&gt; [], :banner =&gt; 'value1 value2 value3 etc...'
 
-      <span class="k">def</span> <span class="nf">copy_files</span> <span class="c1"># :nodoc:</span>
-        <span class="n">empty_directory</span> <span class="s1">&#39;spec/enums&#39;</span>
-        <span class="n">template</span> <span class="s2">&quot;enum_spec.rb&quot;</span><span class="p">,</span> <span class="s2">&quot;spec/enums/</span><span class="si">#{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">_spec.rb&quot;</span>
-      <span class="k">end</span>
-    <span class="k">end</span>
-  <span class="k">end</span>
-<span class="k">end</span>
-</code></pre></div>
+  source_root File.expand_path("../templates", __FILE__)
+
+  def copy_files # :nodoc:
+    empty_directory 'spec/enums'
+    template "enum_spec.rb", "spec/enums/#{file_name}_spec.rb"
+  end
+end   end end ```
+</code></pre>
+
 <p>And the spec template file:</p>
 
 <p><em>lib/generators/rspec/templates/enum_spec.rb</em></p>
-<div class="highlight"><pre><code class="erb language-erb" data-lang="erb"><span class="x">require &#39;spec_helper&#39;</span>
-<span class="cp">&lt;%</span> <span class="n">values</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">arg</span><span class="o">|</span> <span class="cp">%&gt;</span><span class="x"></span>
-<span class="x">describe </span><span class="cp">&lt;%=</span> <span class="s2">&quot;</span><span class="si">#{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">::</span><span class="si">#{</span><span class="n">arg</span><span class="o">.</span><span class="n">camelize</span><span class="si">}</span><span class="s2">&quot;</span> <span class="cp">%&gt;</span><span class="x"> do</span>
-<span class="x">  pending &quot;add some examples to (or delete) #{__FILE__}&quot;</span>
-<span class="x">end</span>
-<span class="cp">&lt;%-</span> <span class="k">end</span> <span class="cp">-%&gt;</span><span class="x"></span>
-</code></pre></div>
+
+<p><code>erb
+require 'spec_helper'
+&lt;% values.each do |arg| %&gt;
+describe &lt;%= "#{class_name}::#{arg.camelize}" %&gt; do
+  pending "add some examples to (or delete) #{__FILE__}"
+end
+&lt;%- end -%&gt;
+</code></p>
+
 <p>After adding these two files to ClassyEnum, I reinstalled and
 reran the generator in my project and everything worked!</p>
 
-<p>Here is my &quot;passing&quot; test:</p>
-<div class="highlight"><pre><code class="irb language-irb" data-lang="irb"><span class="go">rails g classy_enum Priority low medium high</span>
-<span class="go">      create  app/enums</span>
-<span class="go">      create  app/enums/priority.rb</span>
-<span class="go">      invoke  rspec</span>
-<span class="go">      create    spec/enums</span>
-<span class="go">      create    spec/enums/priority_spec.rb</span>
-</code></pre></div>
+<p>Here is my “passing” test:</p>
+
+<p><code>irb
+rails g classy_enum Priority low medium high
+      create  app/enums
+      create  app/enums/priority.rb
+      invoke  rspec
+      create    spec/enums
+      create    spec/enums/priority_spec.rb
+</code></p>
+
 <p>Which generates the following spec file:</p>
 
 <p><em>spec/enums/priority_spec.rb</em></p>
-<div class="highlight"><pre><code class="ruby language-ruby" data-lang="ruby"><span class="nb">require</span> <span class="s1">&#39;spec_helper&#39;</span>
 
-<span class="n">describe</span> <span class="no">Priority</span><span class="o">::</span><span class="no">Low</span> <span class="k">do</span>
-  <span class="n">pending</span> <span class="s2">&quot;add some examples to (or delete) </span><span class="si">#{</span><span class="bp">__FILE__</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="k">end</span>
+<p>```ruby
+require ‘spec_helper’</p>
 
-<span class="n">describe</span> <span class="no">Priority</span><span class="o">::</span><span class="no">Medium</span> <span class="k">do</span>
-  <span class="n">pending</span> <span class="s2">&quot;add some examples to (or delete) </span><span class="si">#{</span><span class="bp">__FILE__</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="k">end</span>
+<p>describe Priority::Low do
+  pending “add some examples to (or delete) #{<strong>FILE</strong>}”
+end</p>
 
-<span class="n">describe</span> <span class="no">Priority</span><span class="o">::</span><span class="no">High</span> <span class="k">do</span>
-  <span class="n">pending</span> <span class="s2">&quot;add some examples to (or delete) </span><span class="si">#{</span><span class="bp">__FILE__</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="k">end</span>
-</code></pre></div>
+<p>describe Priority::Medium do
+  pending “add some examples to (or delete) #{<strong>FILE</strong>}”
+end</p>
+
+<p>describe Priority::High do
+  pending “add some examples to (or delete) #{<strong>FILE</strong>}”
+end
+```</p>
+
 <p>Since I am using the hook_for method, it includes some other behavior,
 such as supporting the <code>--skip-test-framework</code> flag out of the box. This
 would allow someone to generate the enum classes without any specs, but
-I don&#39;t recommend doing that. :)</p>
+I don’t recommend doing that. :)</p>
 
-<h2>Wrapping Up</h2>
+<h2 id="wrapping-up">Wrapping Up</h2>
 
-<p>I&#39;m happy with ClassyEnum generator once again. It creates spec files by
-default which makes me feel like I&#39;m able to practice what I preach. I
+<p>I’m happy with ClassyEnum generator once again. It creates spec files by
+default which makes me feel like I’m able to practice what I preach. I
 was able to achieve all four of my goals without any crazy hacks or making
 any sacrifices. I was also able to easily add support for TestUnit by
 adding an additional generator and template file.</p>
 
-  </div>
-  
-  <div class="post">
-    <h1 class="post-title">
-      <a href="/blog/2013/04/06/building-a-strong-foundation-for-vermonts-technology-future/">
-        Building a strong foundation for Vermont's technology future
-      </a>
-    </h1>
-
-    <span class="post-date">06 Apr 2013</span>
-
-    <p>I went to a <a href="http://www.vermonttechnologyalliance.org/events/event_details.asp?id=308176&amp;group=">VTTA Lunch and Learn</a>
-meeting last week focused on &quot;Marketing Vermont as a technology state&quot;.
-I&#39;ve had some time to reflect on this objective and wanted to talk about some of the frustrations I&#39;ve felt in
-trying to address this very issue.</p>
-
-<p>During the lunch session, David Parker of Dealer.com described how Vermont&#39;s
-greatest opportunity to grow our economy is through the technology sector.
-Vermont’s tourism revenue accounts for a small minority of its GDP, yet our
-state&#39;s marketing is disproportionately focused on tourism.
-<a href="http://www.youtube.com/watch?v=o4yr58Xga2A">In his presentation</a>,
-Parker expressed that we need to get better at educating
-people in science and technology, finding startup capital, and retaining a young
-energetic workforce. Instead of proposing concrete actions though, he suggests
-&quot;changing the rhetoric&quot; by talking about what Vermont has to offer. While I
-agree with his message, unfortunately talk is cheap and ideas are free, and
-neither is worth shit unless you actually stand up and do something.</p>
-
-<p>Unfortunately, getting the word out about these great jobs and companies is not
-enough to attract people to our state. One individual at the meeting went as
-far as suggesting that every ad in Vermont Life magazine should feature a
-cellphone or laptop. Are you kidding me? Vermont is a beautiful place, let&#39;s
-not change that. Can there not be a balance between technology and Vermont&#39;s
-simple beauty without the two interfering with the other?</p>
-
-<p>One topic that was missing from the lunch discussion was the role that community
-plays in this endeavour. Yes, technology jobs and businesses are undeniably
-important, but community is what gives people a sense of belonging. Do artists
-and musicians live here because Vermont has one of the <a href="http://www.bls.gov/web/laus/laumstrk.htm">lowest unemployment rates in the country</a>?
-No, they live here because there is a community that
-supports them. The role of community in the technology sector is no different.</p>
-
-<h2>Community is an Investment, Not an Overnight Success</h2>
-
-<p>Many Americans prefer band-aids to solve problems and don&#39;t consider future
-repercussions of today&#39;s decisions. Why should we invest in renewable energy
-when we can solve our immediate energy needs with fossil fuels? Why should we
-pay higher taxes when corporations can sponsor our highways? Vermonters are
-different. We don&#39;t want billboards taking away from Vermont&#39;s beauty. We would
-rather pay $15 for a hamburger made from locally raised cows than $4 for a
-Big Mac. More importantly though, our small communities thrive because they&#39;re not
-looking for short term payoff. Community, like renewable energy, is a long
-term investment and not a band-aid.</p>
-
-<p>I&#39;m organizing a software developer conference this summer called the
-<a href="http://burlingtonruby.com/">Burlington Ruby Conference</a>.
-Last year was our first time hosting the event and it attracted
-80 developers for a weekend of networking and education in Burlington. Only about
-25% of the attendees were from Vermont. The rest were from Boston, Montreal,
-New York, and other parts of New England. We even had two guys from Denmark and
-one from Mississippi. We also had a small number of women attend, but this year we have
-been putting a lot of energy into increasing that number. We reached out to the
-female developer and speaker communities, published a <a href="http://burlingtonruby.com/diversity.html">diversity statement</a> and
-<a href="http://burlingtonruby.com/conduct.html">code of conduct</a>, and have teamed up with
-<a href="http://www.girldevelopit.com/chapters/burlington">Girl Develop It</a> to offer low cost
-training in conjunction with the conference. What other technology event in
-Vermont can make similar claims?</p>
-
-<p>This year we&#39;ve reached out to numerous Vermont companies soliciting sponsorship
-for the conference and have been met with the same response each time. &quot;Sorry,
-not interested. We don&#39;t do Ruby, we do _____&quot;. Fill in the blank with
-Java, .Net, LOLCODE, whatever. That&#39;s great, but these companies are obviously
-missing the point. When was the last time there was a Java or .Net conference of this caliber in Vermont?
-This is an opportunity to support the very community that these
-companies are trying to hire from. Just because a developer writes Java code
-to pay the bills, doesn&#39;t necessarily mean he or she wants to do this in their
-free time. If you look at the
-<a href="http://burlingtonruby.org/buruco2012/">speakers we had last year</a>, it clearly wasn&#39;t all
-about Ruby. We had talks on building location based apps, database scaling,
-and multiple JavaScript talks from some of the most respected people in these fields.</p>
-
-<p>Why have a Ruby conference then you ask? Simple. The Ruby community as a whole
-represents the type of community that we know will thrive in Vermont. The people
-are passionate, helpful, and strong advocates for diversity. Ruby developers
-also tend to be at the forefront of best practices. Combined, these characteristics
-lead to a vibrant, successful community. Just look at the number of other
-<a href="http://lanyrd.com/topics/ruby/">regional Ruby conferences</a> that have sprung
-up in the last few years. Ruby may not be the
-<a href="http://www.codinghorror.com/blog/2013/03/why-ruby.html">cool language anymore</a>,
-but the community is thriving. In my years of being a
-Ruby developer, I&#39;ve never met someone who said they only use Ruby because it
-pays the bills.</p>
-
-<p>This conference is going to happen whether we have local support or not. We are
-fortunate to live in a city where our costs to organize the event will be covered
-by ticket sales alone. We&#39;ve also added a crowd-sourced fundraising effort
-called &quot;<a href="http://burlingtonruby.com/cat.html">Burlington Ruby Cats</a>&quot;
-that is not only raising money for the conference,
-but also for the Humane Society of Chittenden County. Having sponsors would allow
-us to do things above and beyond what a typical conference can offer such as
-scholarships for students and underrepresented groups like women and minorities.
-Equally as important though, having support from local sponsors shows that these
-companies actually care about our community. We are not organizing this
-conference to make money, infact we will be lucky if we break even given
-everything we want to do. We are hosting a lakeside BBQ and providing professional
-recordings of the talks free of charge. We are organizing the conference because
-we want to invest in our community. We want people to think about this conference
-when they think of Burlington, Vermont; thereby helping to achieve our goal of
-&quot;Marketing Vermont as a technology state&quot;.</p>
-
-<h2>How can I get involved?</h2>
-
-<p>Don&#39;t get me wrong, the Vermont software community as it stands today is awesome.
-I participated in (<a href="http://beerlington.github.io/blog/2012/10/21/how-we-won-hackvt/">and won</a>)
-the 2nd annual Vermont Hackathon last October. This
-event was targeted toward Vermont developers and the amount of support that local
-businesses gave was incredible. This was a great success for our community,
-but we can&#39;t limit ourselves to a handful of these events a year, or only focus
-on the business side of Vermont&#39;s technology economy.</p>
-
-<p>I also help organize a number of different software related user groups in the
-Burlington area. Our first group, the <a href="http://www.btvwag.org/">Burlington Web Application Group</a>
-(BTVWAG) typically has 30-50 people at any given meetup, and our latest group,
-<a href="http://burlingtonjs.org/">Burlington JS</a>, filled all 35 of its slots in the first day it was announced.
-These groups are run by volunteers and represent exactly what our technology
-community is about.</p>
-
-<p>People ask me after every meetup how they can get involved, but then I never hear
-back from them. Step up folks! Acknowledging that we have a problem is the first
-step, but taking action is the only way that things will change. There are a
-number of community members who get this and have devoted countless hours of their free
-time to building the community. Aside from the hackathon,
-<a href="http://vtcodecamp.org/">Vermont Code Camp</a>, <a href="http://www.techjamvt.com/">Vermont Tech Jam</a>,
-and <a href="http://btvgig.org/">BTVGig</a> are other examples of events and initiatives led by
-passionate Vermonters who want to see our community grow. We also have folks
-like Jen Mincar at <a href="http://www.officesquaredvt.com/">Office Squared</a> who provide
-places for these groups to gather, free of charge.</p>
-
-<p>Vermont has jobs and an incredible opportunity for growth through technology,
-so now is the time to start investing in our community, and investing in our
-future. Please <a href="https://twitter.com/beerlington">reach out</a> if you want to
-join us in building a strong foundation for Vermont&#39;s technology future.</p>
 
   </div>
   
