@@ -37,6 +37,7 @@ After doing some research on direct image uploads, we learned that the basic flo
 * Images are sent directly to Cloudinary from the browser
 * Cloudinary sends back meta data for each image one at a time, including the "public id" (later used to retrieve images)
 * Browser makes API request to the server to create a new record for each image, and includes the Cloudinary "public id" in the request
+* The image is fetched from Cloudinary on demand by constructing an image URL using the public ID.
 
 Rather than including a bunch of client-specific code that would not be fully functional, I created a simple [Ember application](https://github.com/beerlington/cats-ui) that is backed by a [Rails API](https://github.com/beerlington/cats-api). They are in separate repos because that is how we develop Ember apps at Agilion.
 
@@ -71,7 +72,7 @@ I've only included the most important pieces of the Ember code to reduce the len
 
 ## Cloudinary Config Initializer
 
-The initializer is simply telling the Cloudinary plugin what the **cloud name** and **public key** are for this application. In an Ember-CLI project, these values are stored in the [environment-specific configuration](https://github.com/beerlington/cats-ui/blob/master/config/environment.js#L30-L31). Note that there *is* a private key, but this is *not* set in the Ember app. The private key is used when creating an authentication signature (see section below) and is only included in the Rails app settings.
+The initializer is simply telling the Cloudinary plugin what the **cloud name** and **public key** are for this application. In an Ember-CLI project, these values are stored in the [environment-specific configuration](https://github.com/beerlington/cats-ui/blob/master/config/environment.js#L30-L31). Note that there *is* a private key, but this is *not* set in the Ember app. The private key is used when creating an authentication signature (see "Authentication Signature" section) and is only included in the Rails app settings.
 
 **app/initializers/cloudinary.js** - [GitHub](https://github.com/beerlington/cats-ui/blob/master/app/initializers/cloudinary.js)
 
@@ -135,8 +136,6 @@ The Cloudinary file input view has a few responsibilities related to setup and c
 **app/views/cloudinary.js** - [GitHub](https://github.com/beerlington/cats-ui/blob/master/app/views/cloudinary.js)
 
 ```js
-import Ember from 'ember';
-
 export default Ember.View.extend({
   tagName: 'input',
   name: 'file',
@@ -172,7 +171,7 @@ export default Ember.View.extend({
 ```
 
 
-First, it is responsible for loading the authentication signature from the Rails API (details below):
+First, it is responsible for loading the authentication signature from the Rails API:
 
 ```js
 $.get(CatsUiENV.API_NAMESPACE + '/cloudinary_params', {timestamp: Date.now() / 1000}).done(function(response) {
@@ -185,7 +184,7 @@ $.get(CatsUiENV.API_NAMESPACE + '/cloudinary_params', {timestamp: Date.now() / 1
 
 It appends the returned signature object to a data attribute on the file input HTML element called "data-form-data". Note that this is done within an `Ember.run` function to ensure that it is finished before initializing up the Cloudinary file upload. This was something that stumped us at first, and I'm sure there's a better approach.
 
-After the signature data is set, the view initializes the Cloudinary file upload widget on the input.  Here is where we define the settings for our project such as the maximum file size allowed, accepted file types (images) and the maximum dimensions of the image (it automatically scales them down):
+After the signature data is set, the view initializes the Cloudinary file upload widget on the input.  Here is where we define the settings for our project such as the maximum file size allowed, accepted file types (images) and the maximum dimensions of the image (it automatically scales them down). Additional options can be found in the [jQuery File Upload documentation](https://github.com/blueimp/jQuery-File-Upload/wiki/Options#image-preview--resize-options).
 
 ```js
 _this.$().cloudinary_fileupload({
@@ -197,7 +196,7 @@ _this.$().cloudinary_fileupload({
 });
 ```
 
-The last functionality this view is responsible for is handling the Cloudinary response and setting a cat's Cloudinary public ID. Cloudinary sends various events to the input including progress and completion, to which you can bind functionality. In the demo, we're just binding to the 'fileuploaddone' event and setting a controller property when it's complete.
+The last functionality this view is responsible for is handling the Cloudinary response and setting a cat model's Cloudinary public ID. Cloudinary sends various events to the input including progress and completion, to which you can bind functionality. In the demo, we're just binding to the 'fileuploaddone' event and setting a controller property when it's complete. Additional callback options can be found in the [jQuery File Upload documentation](https://github.com/blueimp/jQuery-File-Upload/wiki/Options#callback-options).
 
 ```js
 _this.$().bind('fileuploaddone', function (e, data) {
@@ -207,10 +206,7 @@ _this.$().bind('fileuploaddone', function (e, data) {
 
 ## The Cats Controller
 
-In the demo, the cats controller is a simplified version of what you
-would use in a production application. Here we are just persisting the cat
-with ember-data, and then creating a new Cat record so the form has a
-different object.
+In the demo, the cats controller is a simplified version of what you would use in a production application. By this point, the view has already set the public ID for the cat's image, and we are just persisting the cat with ember-data and then creating a new Cat record so the form has a different object.
 
 ```js
 export default Ember.ArrayController.extend({
@@ -230,9 +226,9 @@ export default Ember.ArrayController.extend({
 
 ## Authentication Signature
 
-Another thing that tripped us up was the process for authenticating the Cloudinary image upload request. Cloudinary requires that you generate an authentication signature on the server and pass it to the client *before* initializing the file upload. It wasn't clear from the Cloudinary documentation *why* this needed to be done or what was actually required to do it.
+Another thing that tripped us up was the process for authenticating the Cloudinary image upload request. Cloudinary requires that you generate an authentication signature on the server and pass it to the client *before* initializing the file upload widget. It wasn't clear from the documentation *why* this needed to be done or what was actually required to do it.
 
-It also seemed counter-intuitive at first that we were depending on the Rails API for something that was supposedly 100% client-side, but from a security standpoint, it makes perfect sense. The authentication signature is a property that is sent to Cloudinary with the images, and is used to authenticate your request.
+The authentication signature is a property that is sent to Cloudinary with the images, and is used to authenticate your request. It seemed counter-intuitive at first that we were depending on the Rails API for something that was supposedly 100% client-side. From a security standpoint, it makes perfect sense because the private key would not be private if it was included in the JavaScript source code.
 
 When the page loads, our application makes a request to the server (via the Cats view) that generates an authentication signature. I've omitted the [controller code to generate the JSON](https://github.com/beerlington/cats-api/blob/master/app/controllers/v1/cloudinary_params_controller.rb), but the request will look something like this:
 
@@ -257,11 +253,9 @@ As described in the Cats view section, this entire signature object is appended 
 
 ## Viewing the images
 
-At this point you have an Ember.js application that can upload images directly to Cloudinary, but what good is that if you can't retrieve and view the images?
+Another frustrating thing about the Cloudinary documentation is that everything we needed for this project was scattered among at least three different sources. After we had image uploads working, the docs we were referencing assumed we would be using our server-side framework (Rails) to render our HTML templates. Since Ember uses Handlebars and the templates are rendered 100% client-side, we needed a different solution.
 
-Another frustrating thing about the Cloudinary documentation is that everything we needed for this project was scattered among at least three different sources. After we had image uploads working, the docs we had referenced assumed we were using our server-side framework (Rails) to render our templates. Since Ember uses Handlebars and the templates are rendered 100% client-side, we needed a different solution.
-
-We ended up creating a helper to handle this functionality, but in retrospect, a component may have been a more semantic option for us.
+In order to view images that are stored in Cloudinary, you need to construct a custom URL that includes the image's public ID, and any options such as image size and scale. We ended up creating a helper to handle this functionality, but in retrospect, a component may have been a more semantic option for us. Additional options for constructing the URL can be found in the [jQuery image manipulation documentation](http://cloudinary.com/documentation/jquery_image_manipulation).
 
 **app/helpers/cloudinary-tag.js** - [GitHub](https://github.com/beerlington/cats-ui/blob/master/app/helpers/cloudinary-tag.js)
 
@@ -283,15 +277,22 @@ export default Ember.Handlebars.makeBoundHelper(function(publicId, options) {
 });
 ```
 
-Again, I've omitted the [irrelevant template code](https://github.com/beerlington/cats-ui/blob/master/app/templates/cats.hbs#L5-L14) and only left in what is required to render the HTML image tag:
+Again, I've omitted the [less relevant template code](https://github.com/beerlington/cats-ui/blob/master/app/templates/cats.hbs#L5-L14) and only left in what is required to render the HTML image tag:
 
 **app/templates/cats.hbs** - [GitHub](https://github.com/beerlington/cats-ui/blob/master/app/templates/cats.hbs)
 
 {% highlight html %}
 {% raw %}
-<!-- omitted... -->
-{{cloudinary-tag cloudinaryPublicId}}
-<!-- omitted... -->
+{{#each persistedCats}}
+  <div class="col-lg-6">
+    <div class="thumbnail">
+      {{cloudinary-tag cloudinaryPublicId}}
+      <div class="caption">
+        <h3>{{name}}</h3>
+      </div>
+    </div>
+  </div>
+{{/each}}
 {% endraw %}
 {% endhighlight %}
 
