@@ -6,6 +6,8 @@ comments: true
 categories: emberjs cloudinary javascript
 ---
 
+**Update 07/20/2014:** I've written an additional post on [unsigned uploads]({% post_url 2014-07-20-direct-unsigned-cloudinary-uploads-with-emberjs %}) that builds upon this article.
+
 Uploading images to a web application has historically sucked. If you're in the Ruby on Rails world, there are a few gems like [Paperclip](https://github.com/thoughtbot/paperclip) and [Carrierwave](https://github.com/carrierwaveuploader/carrierwave) which are great attempts at solving this problem, but are about as fun to work with as a pile of rocks. I'm picking on these two in particular because they are the [most popular Rails file upload gems](https://www.ruby-toolbox.com/categories/rails_file_uploads), and every time I have to use one of these libraries, I get pissed off.
 
 Some of the issues I have with these gems include:
@@ -139,10 +141,8 @@ The Cloudinary file input view has a few responsibilities related to setup and c
 export default Ember.View.extend({
   tagName: 'input',
   name: 'file',
-  classNames: ['cloudinary-fileupload address-form-upload'],
-  attributeBindings: ['name', 'type', 'data-cloudinary-field', 'data-form-data'],
+  attributeBindings: ['name', 'type', 'data-form-data'],
   type: 'file',
-  'data-cloudinary-field': 'image_id',
 
   didInsertElement: function() {
     var _this = this,
@@ -169,7 +169,6 @@ export default Ember.View.extend({
   }
 });
 ```
-
 
 First, it is responsible for loading the authentication signature from the Rails API:
 
