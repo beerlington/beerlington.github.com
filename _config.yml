@@ -4,13 +4,13 @@ highlighter: rouge
 comments: true
 
 # Permalinks
-permalink: /blog/:year/:month/:day/:title/
+permalink: /blog/:year/:month/:day/:title
 
 # Setup
 title: Beerlington
 tagline: The Blog
 description: 'The Blog'
-url: http://beerlington.com/
+url: http://beerlington.com
 
 author:
   name: 'Peter Brown'
