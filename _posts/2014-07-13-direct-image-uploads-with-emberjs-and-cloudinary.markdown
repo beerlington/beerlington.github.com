@@ -113,7 +113,7 @@ included the form portion here.
 
 **app/templates/cats.hbs** - [GitHub](https://github.com/beerlington/cats-ui/blob/master/app/templates/cats.hbs)
 
-{% highlight html %}
+{% highlight handlebars %}
 {% raw %}
 <form role="form" {{action 'createCat' on='submit'}}>
   <div class="form-group">
@@ -280,7 +280,7 @@ Again, I've omitted the [less relevant template code](https://github.com/beerlin
 
 **app/templates/cats.hbs** - [GitHub](https://github.com/beerlington/cats-ui/blob/master/app/templates/cats.hbs)
 
-{% highlight html %}
+{% highlight handlebars %}
 {% raw %}
 {{#each persistedCats}}
   <div class="col-lg-6">
