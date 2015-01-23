@@ -108,7 +108,7 @@ The last part - `this.set('value', this.$().val());` - was added in our app to b
 In our template, we simply insert the component like so, providing the
 'mask' and optional placeholder:
 
-{% highlight html %}
+{% highlight handlebars %}
 {% raw %}
 {{input-mask
   mask='mm/dd/yyyy'
