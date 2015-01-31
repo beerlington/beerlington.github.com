@@ -34,11 +34,7 @@
 html {
   font-family: "PT Sans", Helvetica, Arial, sans-serif;
 }
-@media (min-width: 48rem) {
-  html {
-    font-size: 16px;
-  }
-}
+
 @media (min-width: 58rem) {
   html {
     font-size: 20px;
@@ -55,12 +51,13 @@ html {
 
 .sidebar {
   text-align: center;
-  padding: 2rem 1rem;
+  padding: 0.5rem 1rem;
   color: rgba(255,255,255,.5);
   background-color: #202020;
 }
-@media (min-width: 48rem) {
+@media (min-width: 58rem) {
   .sidebar {
+    padding: 2rem 1rem;
     position: fixed;
     top: 0;
     left: 0;
@@ -89,8 +86,17 @@ html {
   list-style: none;
 }
 .sidebar-nav-item {
-  display: block;
+  display: inline-block;
+  margin: 0 4px;
 }
+
+@media (min-width: 58rem) {
+  .sidebar-nav-item {
+    display: block;
+    margin: 0;
+  }
+}
+
 a.sidebar-nav-item:hover,
 a.sidebar-nav-item:focus {
   text-decoration: underline;
@@ -105,7 +111,7 @@ a.sidebar-nav-item:focus {
  * contents to the bottom of the sidebar in tablets and up.
  */
 
-@media (min-width: 48rem) {
+@media (min-width: 58rem) {
   .sidebar-sticky {
     position: absolute;
     right:  1rem;
@@ -126,7 +132,7 @@ a.sidebar-nav-item:focus {
   padding-bottom: 4rem;
 }
 
-@media (min-width: 48rem) {
+@media (min-width: 58rem) {
   .content {
     max-width: 48rem;
     margin-left: 20rem;
@@ -247,4 +253,17 @@ a.sidebar-nav-item:focus {
 .theme-base-0f .content a,
 .theme-base-0f .related-posts li a:hover {
   color: #8f5536;
+}
+
+.footer {
+  background-color: #202020;
+  color: white;
+  padding: 48px;
+  text-align: center;
+}
+
+@media (min-width: 58rem) {
+  .footer {
+    margin-left: 18rem;
+  }
 }
