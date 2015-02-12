@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Ember Simple Auth Recipe - Stay on the current page after authenticating"
-date: 2015-02-04 19:27
+date: 2015-02-11 19:27
 comments: true
 categories: emberjs javascript ember-simple-auth authentication
 ---
