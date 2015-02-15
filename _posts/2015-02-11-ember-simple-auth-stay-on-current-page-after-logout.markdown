@@ -47,7 +47,7 @@ export default Ember.Route.extend(ApplicationRouteMixin, {
       var currentRoute = this.controllerFor('application').get('currentRouteName');
 
       if (currentRoute === 'stay-on-this-route') {
-        // Do nothing, just stay on the current page.
+        window.location.reload();
       } else {
         this._super();
       }
@@ -56,9 +56,9 @@ export default Ember.Route.extend(ApplicationRouteMixin, {
 }
 ```
 
-In our action, we are getting the name of the current route from the application controller and using that to determine what should happen next. If the user is on the route `'stay-on-this-route'`, they will not be redirected to the root URL, and instead stay on the current page. If they are not on that route, we call `this._super()` and defer to the default behavior.
+In our action, we are getting the name of the current route from the application controller and using that to determine what should happen next. If the user is on the route `'stay-on-this-route'`, they will not be redirected to the root URL, and instead stay on the current page*. If they are not on that route, we call `this._super()` and defer to the default behavior.
 
-One caveat to this approach is that when a user logs out from this page, the in-memory application data is not cleared. This means that things like Ember Data records will remain in memory after the user is logged out. I don't think this is a big deal since it will still be cleared out if the user closes the browser window or logs into another account, but figured it was worth mentioning.
+*Thanks to Gabor Babicz for pointing out that we can use `window.location.reload()` to clear out the in-memory data after logging out. Without this, the Ember Data records would stay in memory until closing the window or logging into another account.
 
 # Conclusion
 
